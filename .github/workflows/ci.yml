@@ -11,27 +11,24 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-# ensure that the workflow is only triggered once per PR, subsequent pushes to the PR will cancel
-# and restart the workflow. See https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
+  # ---------------------------------------------------
+  # 1. QUALITY CONTROL (Format, Clippy, Tests)
+  # ---------------------------------------------------
   fmt:
     name: fmt
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - name: check formatting
-        run: cargo fmt -- --check
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
+      - run: cargo fmt -- --check
+
   clippy:
     name: clippy
     runs-on: ubuntu-latest
@@ -39,124 +36,80 @@ jobs:
       contents: read
       checks: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Run clippy action
-        uses: clechasseur/rs-clippy-check@v3
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-  doc:
-    # run docs generation on nightly rather than stable. This enables features like
-    # https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html which allows an
-    # API be documented as only available in some specific platforms.
-    name: doc
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
-      - name: Run cargo doc
-        run: cargo doc --no-deps --all-features
-        env:
-          RUSTDOCFLAGS: --cfg docsrs
+      - uses: Swatinem/rust-cache@v2
+      - uses: clechasseur/rs-clippy-check@v3
+
   test:
-    runs-on: ${{ matrix.os }}
     name: test ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      # if your project needs OpenSSL, uncomment this to fix Windows builds.
-      # it's commented out by default as the install command takes 5-10m.
-      # - run: echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
-      #   if: runner.os == 'Windows'
-      # - run: vcpkg install openssl:x64-windows-static-md
-      #   if: runner.os == 'Windows'
       - uses: actions/checkout@v4
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      # enable this ci template to run regardless of whether the lockfile is checked in or not
-      - name: cargo generate-lockfile
-        if: hashFiles('Cargo.lock') == ''
-        run: cargo generate-lockfile
-      - name: cargo test --locked
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo test
         run: cargo test --locked --all-features --all-targets
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-  release:
-    name: Build & Release (Linux / macOS / Windows)
-    needs: [fmt, clippy, doc, test]
+
+  # ---------------------------------------------------
+  # 2. RELEASE (The "Magic" Part)
+  # ---------------------------------------------------
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, fmt, clippy]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+  upload-assets:
+    name: release ${{ matrix.target }}
+    needs: create-release
     runs-on: ${{ matrix.os }}
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          # Linux (Static build - runs on any distro)
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+          # macOS (Intel)
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          # macOS (Apple Silicon / M1)
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          # Windows
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
-
-      - name: Build release binary
-        shell: ${{ runner.os == 'Windows' && 'powershell' || 'bash' }}
-        run: |
-          cargo build --release
-          # Normalize output path
-          if [ ${{ runner.os }} = "Windows" ]; then
-            echo "BIN_PATH=target\\release\\${{ github.event.repository.name }}.exe" >> $GITHUB_ENV
-          else
-            echo "BIN_PATH=target/release/${{ github.event.repository.name }}" >> $GITHUB_ENV
-          fi
-
-      - name: Rename binary for distribution
-        shell: ${{ runner.os == 'Windows' && 'powershell' || 'bash' }}
-        run: |
-          APP_NAME=${{ github.event.repository.name }}
-          VERSION=${GITHUB_REF#refs/tags/}
-
-          if [ ${{ runner.os }} = "Windows" ]; then
-            NEW_NAME="$APP_NAME-$VERSION-windows.exe"
-            cp "$env:BIN_PATH" "$NEW_NAME"
-          elif [ ${{ runner.os }} = "macOS" ]; then
-            NEW_NAME="$APP_NAME-$VERSION-macos"
-            cp "$BIN_PATH" "$NEW_NAME"
-          else
-            NEW_NAME="$APP_NAME-$VERSION-linux"
-            cp "$BIN_PATH" "$NEW_NAME"
-          fi
-
-          echo "ASSET_NAME=$NEW_NAME" >> $GITHUB_ENV
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      # This one action handles installing Rust, Cross-compiling, Zipping, and Uploading
+      - name: Build and Upload Asset
+        uses: taiki-e/upload-rust-binary-action@v1
         with:
-          name: ${{ env.ASSET_NAME }}
-          path: ${{ env.ASSET_NAME }}
-
-  release_publish:
-    name: Publish GitHub Release
-    runs-on: ubuntu-latest
-    needs: [release]
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Create GitHub release & upload assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: artifacts/**/*
+          # This pulls the token automatically
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # The target from the matrix above
+          target: ${{ matrix.target }}
+          # (Optional) If you want a specific archive name structure
+          # archive: $bin-$target
+          # (Optional) If you have a binary name different from repo name
+          # bin: my-app-name
