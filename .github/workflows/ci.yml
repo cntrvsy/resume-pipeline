@@ -10,6 +10,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # CHANGE THIS if your binary name in Cargo.toml is different from your Repo name
+  APP_NAME: ${{ github.event.repository.name }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -17,7 +19,7 @@ concurrency:
 
 jobs:
   # ---------------------------------------------------
-  # 1. QUALITY CONTROL (Format, Clippy, Tests)
+  # 1. QUALITY CONTROL
   # ---------------------------------------------------
   fmt:
     name: fmt
@@ -58,7 +60,47 @@ jobs:
         run: cargo test --locked --all-features --all-targets
 
   # ---------------------------------------------------
-  # 2. RELEASE (The "Magic" Part)
+  # 2. DEVELOPMENT BUILDS (Runs on Main)
+  # ---------------------------------------------------
+  build-develop:
+    name: build-develop ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: test
+    # Only run this on the main branch, not on PRs (to save time)
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build Release
+        run: cargo build --release
+
+      # This finds the binary and renames it so you know which OS it is
+      - name: Prepare Artifacts
+        shell: bash
+        run: |
+          mkdir -p bin
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            cp "target/release/${{ env.APP_NAME }}.exe" "bin/${{ env.APP_NAME }}-windows.exe"
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            cp "target/release/${{ env.APP_NAME }}" "bin/${{ env.APP_NAME }}-macos"
+          else
+            cp "target/release/${{ env.APP_NAME }}" "bin/${{ env.APP_NAME }}-linux"
+          fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}
+          path: bin/
+          retention-days: 5
+
+  # ---------------------------------------------------
+  # 3. OFFICIAL RELEASE (Runs on Tags v*)
   # ---------------------------------------------------
   create-release:
     name: create-release
@@ -82,34 +124,23 @@ jobs:
     needs: create-release
     runs-on: ${{ matrix.os }}
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
-          # Linux (Static build - runs on any distro)
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-          # macOS (Intel)
           - target: x86_64-apple-darwin
             os: macos-latest
-          # macOS (Apple Silicon / M1)
           - target: aarch64-apple-darwin
             os: macos-latest
-          # Windows
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-
     steps:
       - uses: actions/checkout@v4
-
-      # This one action handles installing Rust, Cross-compiling, Zipping, and Uploading
       - name: Build and Upload Asset
         uses: taiki-e/upload-rust-binary-action@v1
         with:
-          # This pulls the token automatically
           token: ${{ secrets.GITHUB_TOKEN }}
-          # The target from the matrix above
           target: ${{ matrix.target }}
-          # (Optional) If you want a specific archive name structure
-          # archive: $bin-$target
-          # (Optional) If you have a binary name different from repo name
-          # bin: my-app-name
