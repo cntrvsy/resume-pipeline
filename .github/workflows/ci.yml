@@ -124,6 +124,7 @@ jobs:
         run: cargo build --release
       - name: Set asset name
         id: set_asset_name
+        shell: bash # <-- This is the fix
         run: |
           asset_name="resume-pipeline-${{ github.ref_name }}-${{ matrix.platform }}${{ matrix.archive_ext }}"
           echo "ASSET_NAME=${asset_name}" >> $GITHUB_ENV
