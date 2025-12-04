@@ -89,12 +89,10 @@ jobs:
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
 
-  release:
-    name: release ${{ matrix.os }}
+  build-release-assets:
+    name: build release assets ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write # needed for softprops/action-gh-release
     needs: [fmt, clippy, test]
     strategy:
       fail-fast: false
@@ -124,7 +122,7 @@ jobs:
         run: cargo build --release
       - name: Set asset name
         id: set_asset_name
-        shell: bash # <-- This is the fix
+        shell: bash
         run: |
           asset_name="resume-pipeline-${{ github.ref_name }}-${{ matrix.platform }}${{ matrix.archive_ext }}"
           echo "ASSET_NAME=${asset_name}" >> $GITHUB_ENV
@@ -135,7 +133,28 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path target/release/${{ matrix.binary_name }} -DestinationPath ${{ env.ASSET_NAME }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: ${{ env.ASSET_NAME }}
+
+  create-release:
+    name: create release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-release-assets]
+    permissions:
+      contents: write # needed for softprops/action-gh-release
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release-assets
+      - name: List downloaded files # Optional: for debugging
+        run: ls -R release-assets
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ env.ASSET_NAME }}
+          files: release-assets/*
