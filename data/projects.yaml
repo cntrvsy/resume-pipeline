@@ -1,0 +1,6 @@
+- projects:
+    - title: Resume TUI Generator
+      description: A Rust-based terminal tool to generate dynamic resumes.
+      tech_stack:
+        - Rust + Built CLI logic using Ratatui.
+        - Typst + Automated PDF generation from JSON payloads.
