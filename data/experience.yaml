@@ -1,0 +1,18 @@
+- role: "Software Developer"
+  company: "KBS Driving School"
+  location: "Nairobi (Remote)"
+  date: "June 2023 - Current"
+  summary: "Developed full-stack applications using TypeScript and SvelteKit."
+  bullets:
+    - "Integrated Paystack/Stripe RESTful APIs."
+    - "Built responsive UIs with TailwindCSS."
+    - "Reduced bug reports by 30% using Sentry."
+
+- role: "Technical Support Intern"
+  company: "Kenya Airways"
+  location: "Nairobi"
+  date: "Feb 2023 - May 2023"
+  summary: "Provided technical support for engineering teams."
+  bullets:
+    - "Managed software installation for 3 departments."
+    - "Coordinated workflows using Office 365."
