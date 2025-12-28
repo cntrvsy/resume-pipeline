@@ -106,7 +106,7 @@ resume-pipeline/
 │   ├── education.yaml
 │   ├── experience.yaml
 │   └── projects.yaml
-├── .github/templates/      # Typst templates
+├── templates/      # Typst templates
 │   └── headless_head_hunter.typ
 ├── src/
 │   ├── main.rs            # TUI application logic
