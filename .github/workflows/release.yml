@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*" # Triggers on tags like v0.1.0
+      - "v*"
 
 permissions:
   contents: write
@@ -13,36 +13,30 @@ env:
 
 jobs:
   # ---------------------------------------------------
-  # 1. BUILD EXECUTABLES (Matrix)
+  # 1. BUILD EXECUTABLES
   # ---------------------------------------------------
   build:
     name: Build ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
     strategy:
+      # FIX 1: Set this to false so one broken platform doesn't kill the release for everyone else
       fail-fast: false
       matrix:
         platform:
-          # --- LINUX (Standard GNU) ---
           - name: linux-x86_64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            ext: "" # No extension
-
-          # --- WINDOWS ---
+            ext: ""
           - name: windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
             ext: ".exe"
-
-          # --- MAC (Apple Silicon) ---
           - name: macos-silicon
             os: macos-latest
             target: aarch64-apple-darwin
             ext: ""
-
-          # --- MAC (Intel) ---
           - name: macos-intel
-            os: macos-13 # Older image for Intel compatibility
+            os: macos-13
             target: x86_64-apple-darwin
             ext: ""
 
@@ -54,16 +48,19 @@ jobs:
         with:
           targets: ${{ matrix.platform.target }}
 
+      # FIX 2: Explicitly force-install the target.
+      # This fixes the "can't find crate for std" error on Mac runners.
+      - name: Force Install Target
+        run: rustup target add ${{ matrix.platform.target }}
+
       - name: Build Binary
         run: cargo build --release --target ${{ matrix.platform.target }}
 
-      # Rename the binary to something unique (e.g., resume-pipeline-linux-x86_64)
       - name: Rename Binary
         shell: bash
         run: |
           mv target/${{ matrix.platform.target }}/release/${{ env.BIN_NAME }}${{ matrix.platform.ext }} ${{ env.BIN_NAME }}-${{ matrix.platform.name }}${{ matrix.platform.ext }}
 
-      # Upload just the raw executable to temporary storage
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -80,25 +77,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Create the Data Zip (One time, on Linux)
       - name: Zip Data Folder
         run: zip -r resume-data.zip data/
 
-      # 2. Download all binaries from the build jobs
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
 
-      # 3. List files for debugging (Optional)
-      - name: List Files to Upload
-        run: ls -R artifacts && ls -lh resume-data.zip
-
-      # 4. Create the Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          # This config grabs whatever files successfully built.
+          # If Mac Intel fails again, you still get the Windows/Linux/Mac-Silicon files.
           files: |
             resume-data.zip
             artifacts/*
