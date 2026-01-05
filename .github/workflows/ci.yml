@@ -1,109 +1,105 @@
-name: CI
+name: Release
 
 on:
-  pull_request:
   push:
-    branches:
-      - main
     tags:
-      - "v*"
+      - "v*" # Triggers on tags like v0.1.0
+
+permissions:
+  contents: write
 
 env:
-  CARGO_TERM_COLOR: always
-  APP_NAME: resume-pipeline
+  BIN_NAME: resume-pipeline
 
 jobs:
   # ---------------------------------------------------
-  # 1. QUALITY CONTROL
+  # 1. BUILD EXECUTABLES (Matrix)
   # ---------------------------------------------------
-  quality-check:
-    name: Quality Control
+  build:
+    name: Build ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          # --- LINUX (Standard GNU) ---
+          - name: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            ext: "" # No extension
+
+          # --- WINDOWS ---
+          - name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            ext: ".exe"
+
+          # --- MAC (Apple Silicon) ---
+          - name: macos-silicon
+            os: macos-latest
+            target: aarch64-apple-darwin
+            ext: ""
+
+          # --- MAC (Intel) ---
+          - name: macos-intel
+            os: macos-13 # Older image for Intel compatibility
+            target: x86_64-apple-darwin
+            ext: ""
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.target }}
+
+      - name: Build Binary
+        run: cargo build --release --target ${{ matrix.platform.target }}
+
+      # Rename the binary to something unique (e.g., resume-pipeline-linux-x86_64)
+      - name: Rename Binary
+        shell: bash
+        run: |
+          mv target/${{ matrix.platform.target }}/release/${{ env.BIN_NAME }}${{ matrix.platform.ext }} ${{ env.BIN_NAME }}-${{ matrix.platform.name }}${{ matrix.platform.ext }}
+
+      # Upload just the raw executable to temporary storage
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.platform.name }}
+          path: ${{ env.BIN_NAME }}-${{ matrix.platform.name }}${{ matrix.platform.ext }}
+
+  # ---------------------------------------------------
+  # 2. BUNDLE DATA & PUBLISH
+  # ---------------------------------------------------
+  release:
+    name: Publish Release
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+
+      # 1. Create the Data Zip (One time, on Linux)
+      - name: Zip Data Folder
+        run: zip -r resume-data.zip data/
+
+      # 2. Download all binaries from the build jobs
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
         with:
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt -- --check
-      - uses: clechasseur/rs-clippy-check@v3
+          path: artifacts
+          merge-multiple: true
+
+      # 3. List files for debugging (Optional)
+      - name: List Files to Upload
+        run: ls -R artifacts && ls -lh resume-data.zip
+
+      # 4. Create the Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          args: --all-features
-      - run: cargo test --locked --all-features --all-targets
-
-  # ---------------------------------------------------
-  # 2. RELEASE BUILD
-  # ---------------------------------------------------
-  release:
-    name: Release ${{ matrix.label }}
-    permissions:
-      contents: write
-    needs: quality-check
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ${{ matrix.os }}
-    strategy:
-      # FIX 1: Prevent one failure from cancelling the other builds
-      fail-fast: false
-      matrix:
-        include:
-          # --- LINUX (Portable) ---
-          - target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
-            label: linux-amd64
-            install_cmd: |
-              sudo apt-get update
-              sudo apt-get install -y musl-tools
-
-          # --- MAC (Apple Silicon) ---
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            label: macos-silicon
-            install_cmd: ""
-
-          # --- MAC (Intel) ---
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            label: macos-intel
-            install_cmd: ""
-
-          # --- WINDOWS ---
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            label: windows-amd64
-            install_cmd: ""
-
-    steps:
-      - uses: actions/checkout@v4
-
-      # FIX 2: Explicitly install the specific target using rustup
-      # The dtolnay action tries to do this, but running it manually guarantees it works.
-      - name: Install Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      # Safety check: Ensure the target is definitely added
-      - name: Verify Target Installation
-        run: rustup target add ${{ matrix.target }}
-
-      - uses: Swatinem/rust-cache@v2
-
-      # 3. Install OS Dependencies (Like musl-tools for Linux)
-      - name: Install OS Dependencies
-        if: matrix.install_cmd != ''
-        run: ${{ matrix.install_cmd }}
-
-      # 4. Build and Upload
-      - name: Build and Upload Asset
-        uses: taiki-e/upload-rust-binary-action@v1
-        with:
-          bin: ${{ env.APP_NAME }}
-          target: ${{ matrix.target }}
-
-          # Creates nicely named zip files: resume-pipeline-linux-amd64.tar.gz
-          asset_name: ${{ env.APP_NAME }}-${{ matrix.label }}
-
-          # Bundles the data folder inside the zip
-          include: data
-
-          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            resume-data.zip
+            artifacts/*
+          generate_release_notes: true
