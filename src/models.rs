@@ -22,6 +22,11 @@ pub struct Profile {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct JobTitle {
+    pub title: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Education {
     pub school: String,
     pub degree: String,
@@ -64,6 +69,8 @@ pub struct ResumeData {
     pub education: Vec<Education>,
     pub experience: Vec<Experience>,
     pub projects: Vec<Project>,
+    pub job_title: Option<String>,
+    pub job_titles: Vec<JobTitle>,
 }
 
 // Wrapper for education YAML parsing
@@ -90,19 +97,18 @@ impl ResumeData {
 
         // Helper to read a file
         let read_yaml = |filename: &str| -> Result<String> {
-            let path = Path::new("data").join(filename);
+            let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+            let path = manifest_dir.join("data").join(filename);
 
-            // Check if file exists first to give a better error message
             if !path.exists() {
                 return Err(color_eyre::eyre::eyre!(
-                    "File not found at: {:?}. (Looking inside {:?})",
+                    "File not found at: {:?}. (CARGO_MANIFEST_DIR={:?})",
                     path,
-                    current_dir
+                    manifest_dir
                 ));
             }
 
-            let content = fs::read_to_string(&path)?;
-            Ok(content)
+            Ok(fs::read_to_string(&path)?)
         };
 
         // Load Profile
@@ -115,6 +121,18 @@ impl ResumeData {
                 }
             }
             Err(e) => eprintln!("Warning: Could not load profile.yaml: {}", e),
+        }
+
+        // Load Job Titles
+        match read_yaml("jobtitles.yaml") {
+            Ok(job_titles_str) => {
+                if !job_titles_str.is_empty() {
+                    data.job_titles = serde_yaml::from_str(&job_titles_str).map_err(|e| {
+                        color_eyre::eyre::eyre!("YAML Parsing Error in jobtitles.yaml: {}", e)
+                    })?;
+                }
+            }
+            Err(e) => eprintln!("Warning: Could not load jobtitles.yaml: {}", e),
         }
 
         // Load Education
@@ -199,6 +217,7 @@ impl ResumeData {
                 .filter(|p| p.is_visible)
                 .cloned()
                 .collect(),
+            job_title: self.job_title.clone().unwrap_or_else(|| " N/A".to_string()),
         }
     }
 }
@@ -210,6 +229,7 @@ pub struct FilteredResumeData {
     education: Vec<Education>,
     experience: Vec<Experience>,
     projects: Vec<Project>,
+    pub job_title: String,
 }
 
 // Manual implementation of IntoValue/IntoDict to resolve version conflicts
@@ -267,6 +287,7 @@ impl From<FilteredResumeData> for Dict {
         dict.insert("education".into(), val.education.into_value());
         dict.insert("experience".into(), val.experience.into_value());
         dict.insert("projects".into(), val.projects.into_value());
+        dict.insert("job_title".into(), val.job_title.into_value());
         dict
     }
 }

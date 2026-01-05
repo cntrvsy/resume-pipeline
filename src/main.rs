@@ -11,6 +11,7 @@ use std::fs;
 use std::path::Path;
 
 mod models;
+mod typst_backend;
 use models::ResumeData;
 
 // 1. STATE MANAGEMENT
@@ -18,6 +19,7 @@ use models::ResumeData;
 enum CurrentScreen {
     Welcome,
     ProfileView,
+    JobTitleSelection,
     EducationSelection,
     ExperienceSelection,
     ProjectsSelection,
@@ -42,6 +44,7 @@ struct App {
     education_list_state: ListState,
     experience_list_state: ListState,
     projects_list_state: ListState,
+    job_title_list_state: ListState,
 }
 
 impl App {
@@ -57,6 +60,7 @@ impl App {
             education_list_state: ListState::default(),
             experience_list_state: ListState::default(),
             projects_list_state: ListState::default(),
+            job_title_list_state: ListState::default(),
         }
     }
 
@@ -101,6 +105,36 @@ impl App {
                 item.is_visible = !item.is_visible;
             }
         }
+    }
+
+    //Navigation helpers for Job Titles
+
+    pub fn next_job_title(&mut self) {
+        let len = self.data.job_titles.len();
+        if len == 0 {
+            return;
+        }
+
+        let i = match self.job_title_list_state.selected() {
+            Some(i) if i + 1 < len => i + 1,
+            _ => 0,
+        };
+
+        self.job_title_list_state.select(Some(i));
+    }
+
+    pub fn previous_job_title(&mut self) {
+        let len = self.data.job_titles.len();
+        if len == 0 {
+            return;
+        }
+
+        let i = match self.job_title_list_state.selected() {
+            Some(0) | None => len - 1,
+            Some(i) => i - 1,
+        };
+
+        self.job_title_list_state.select(Some(i));
     }
 
     // Navigation helpers for Experience
@@ -191,13 +225,43 @@ impl App {
 
     fn handle_key_event(&mut self, key: KeyCode) {
         match &self.current_screen {
+            // ─────────────────────────────────────────────────────────────
+            // Welcome → Job Title
+            // ─────────────────────────────────────────────────────────────
             CurrentScreen::Welcome => match key {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Enter => {
-                    self.current_screen = CurrentScreen::ProfileView;
+                    // Skip if no job titles exist
+                    if self.data.job_titles.is_empty() {
+                        self.current_screen = CurrentScreen::ProfileView;
+                    } else {
+                        self.current_screen = CurrentScreen::JobTitleSelection;
+                        self.job_title_list_state.select(Some(0));
+                    }
                 }
                 _ => {}
             },
+
+            // ─────────────────────────────────────────────────────────────
+            // Job Title (single-select)
+            // ─────────────────────────────────────────────────────────────
+            CurrentScreen::JobTitleSelection => match key {
+                KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
+                KeyCode::Char('j') | KeyCode::Down => self.next_job_title(),
+                KeyCode::Char('k') | KeyCode::Up => self.previous_job_title(),
+                KeyCode::Enter => {
+                    if let Some(i) = self.job_title_list_state.selected() {
+                        self.data.job_title = Some(self.data.job_titles[i].title.clone());
+
+                        self.current_screen = CurrentScreen::ProfileView;
+                    }
+                }
+                _ => {}
+            },
+
+            // ─────────────────────────────────────────────────────────────
+            // Profile
+            // ─────────────────────────────────────────────────────────────
             CurrentScreen::ProfileView => match key {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Enter => {
@@ -206,6 +270,10 @@ impl App {
                 }
                 _ => {}
             },
+
+            // ─────────────────────────────────────────────────────────────
+            // Education
+            // ─────────────────────────────────────────────────────────────
             CurrentScreen::EducationSelection => match key {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Char('j') | KeyCode::Down => self.next_education(),
@@ -217,6 +285,10 @@ impl App {
                 }
                 _ => {}
             },
+
+            // ─────────────────────────────────────────────────────────────
+            // Experience
+            // ─────────────────────────────────────────────────────────────
             CurrentScreen::ExperienceSelection => match key {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Char('j') | KeyCode::Down => self.next_experience(),
@@ -231,13 +303,16 @@ impl App {
                 }
                 _ => {}
             },
+
+            // ─────────────────────────────────────────────────────────────
+            // Projects
+            // ─────────────────────────────────────────────────────────────
             CurrentScreen::ProjectsSelection => match key {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Char('j') | KeyCode::Down => self.next_project(),
                 KeyCode::Char('k') | KeyCode::Up => self.previous_project(),
                 KeyCode::Char(' ') => self.toggle_project(),
                 KeyCode::Enter => {
-                    // Generate PDF
                     self.current_screen = CurrentScreen::Generating;
                     match generate_pdf(&self.data) {
                         Ok(path) => {
@@ -253,12 +328,17 @@ impl App {
                 }
                 _ => {}
             },
+
+            // ─────────────────────────────────────────────────────────────
+            // Terminal states
+            // ─────────────────────────────────────────────────────────────
             CurrentScreen::Success(_) | CurrentScreen::Error(_) => match key {
                 KeyCode::Char('q') | KeyCode::Enter | KeyCode::Esc => {
                     self.current_screen = CurrentScreen::Exiting;
                 }
                 _ => {}
             },
+
             CurrentScreen::Generating | CurrentScreen::Exiting => {}
         }
     }
@@ -266,51 +346,42 @@ impl App {
 
 // 2. PDF GENERATION
 fn generate_pdf(data: &ResumeData) -> Result<String> {
-    use typst_as_lib::{TypstEngine, typst_kit_options::TypstKitFontOptions};
+    use typst::foundations::Dict;
+    // Import PdfOptions for 0.12 API
+    use typst_backend::ResumeWorld;
+    use typst_pdf::PdfOptions;
 
-    // Create output directory
-    let output_dir = Path::new("output");
+    let output_dir = Path::new("data/output");
     if !output_dir.exists() {
         fs::create_dir(output_dir)?;
     }
 
-    // Read the Typst template
-    let template_path = Path::new("templates/headless_head_hunter.typ");
-    if !template_path.exists() {
-        return Err(color_eyre::eyre::eyre!(
-            "Template not found at: {:?}",
-            template_path
-        ));
-    }
-    let template_content = fs::read_to_string(template_path)?;
+    // Load template
+    // Note: Assuming you are using include_str! for the embedded solution
+    // If you are reading from disk for dev, ensure the path is correct
+    let template_path = Path::new("data/templates/headless_head_hunter.typ");
+    let template_content = fs::read_to_string(template_path).expect("Could not read template file");
 
-    // 1. Configure font options using the helper struct from typst-as-lib
-    let font_options = TypstKitFontOptions::default()
-        .include_system_fonts(false) // Disable OS fonts as requested
-        .include_embedded_fonts(true); // Ensure the manually passed fonts are used
-
-    // 2. Build the Typst engine
-    let engine = TypstEngine::builder()
-        .main_file(template_content)
-        .fonts(vec![
-            // This manually embeds the font into the binary
-            include_bytes!("../assets/fonts/DejaVuSans.ttf").as_slice(),
-        ])
-        .search_fonts_with(font_options) // Use the wrapper here
-        .build();
-
+    // Convert Data
     let filtered_data = data.to_filtered_data();
+    let inputs: Dict = filtered_data.into();
 
-    // Compile the document
-    let doc = engine
-        .compile_with_input(filtered_data)
+    // Create World
+    let world = ResumeWorld::new(template_content, inputs);
+
+    // Compile
+    let document = typst::compile(&world)
         .output
-        .map_err(|e| color_eyre::eyre::eyre!("Typst compilation error: {:?}", e))?;
+        .map_err(|err| color_eyre::eyre::eyre!("Typst Compile Errors: {:?}", err))?;
 
-    // Generate PDF
-    let options = Default::default();
-    let pdf_data = typst_pdf::pdf(&doc, &options)
-        .map_err(|e| color_eyre::eyre::eyre!("PDF generation error: {:?}", e))?;
+    // FIX: Updated to match typst-pdf 0.12 signature
+    // It takes 2 arguments: the document and the options.
+    let options = PdfOptions::default();
+
+    // FIX: Handle the Result returned by pdf().
+    // The ? operator unwraps the Ok(Vec<u8>) or returns the Err.
+    let pdf_data = typst_pdf::pdf(&document, &options)
+        .map_err(|e| color_eyre::eyre::eyre!("PDF Export Error: {:?}", e))?;
 
     let output_path = output_dir.join("resume.pdf");
     fs::write(&output_path, pdf_data)?;
@@ -348,6 +419,7 @@ fn render_ui(frame: &mut Frame, app: &mut App) {
     match &app.current_screen {
         CurrentScreen::Welcome => render_welcome_screen(frame),
         CurrentScreen::ProfileView => render_profile_screen(frame, app),
+        CurrentScreen::JobTitleSelection => render_job_title_screen(frame, app),
         CurrentScreen::EducationSelection => render_education_screen(frame, app),
         CurrentScreen::ExperienceSelection => render_experience_screen(frame, app),
         CurrentScreen::ProjectsSelection => render_projects_screen(frame, app),
@@ -384,7 +456,7 @@ fn render_welcome_screen(frame: &mut Frame) {
         Line::from(vec![
             Span::raw("Welcome, "),
             Span::styled(
-                "Benin",
+                "User",
                 Style::default()
                     .fg(Color::Yellow)
                     .add_modifier(Modifier::BOLD),
@@ -393,8 +465,6 @@ fn render_welcome_screen(frame: &mut Frame) {
         Line::from(""),
         Line::from("This tool will help you generate targeted resumes"),
         Line::from("based on your YAML data source."),
-        Line::from(""),
-        Line::from("Target Role: Fullstack Engineer (Default)"),
     ];
 
     let paragraph = Paragraph::new(welcome_text)
@@ -482,6 +552,72 @@ fn render_profile_screen(frame: &mut Frame, app: &App) {
         Span::raw(" Quit "),
     ]))
     .alignment(Alignment::Center);
+    frame.render_widget(footer, chunks[2]);
+}
+
+fn render_job_title_screen(frame: &mut Frame, app: &mut App) {
+    let chunks = Layout::vertical([
+        Constraint::Length(3),
+        Constraint::Fill(1),
+        Constraint::Length(3),
+    ])
+    .split(frame.area());
+
+    // Header
+    let header_text = "Step 1: Select Job Title | Navigate: j/k | Confirm: <Enter>";
+    let header = Paragraph::new(header_text).block(Block::bordered().title(" Job Title "));
+    frame.render_widget(header, chunks[0]);
+
+    // List items
+    let items: Vec<ListItem> = if app.data.job_titles.is_empty() {
+        vec![ListItem::new(Line::from(Span::styled(
+            "No job titles found",
+            Style::default().fg(Color::Yellow),
+        )))]
+    } else {
+        app.data
+            .job_titles
+            .iter()
+            .enumerate()
+            .map(|(idx, jt)| {
+                let selected = app
+                    .job_title_list_state
+                    .selected()
+                    .map(|s| s == idx)
+                    .unwrap_or(false);
+
+                let marker = if selected { "[x] " } else { "[ ] " };
+                let content = format!("{}{}", marker, jt.title);
+
+                ListItem::new(Line::from(content))
+            })
+            .collect()
+    };
+
+    let list = List::new(items)
+        .block(Block::bordered().title(" Available Roles "))
+        .highlight_style(
+            Style::default()
+                .bg(Color::Cyan)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    frame.render_stateful_widget(list, chunks[1], &mut app.job_title_list_state);
+
+    // Footer
+    let footer = Paragraph::new(Line::from(vec![
+        Span::styled(
+            " <Enter> ",
+            Style::default().bg(Color::Green).fg(Color::Black),
+        ),
+        Span::raw(" Select & Continue    "),
+        Span::styled(" <q> ", Style::default().bg(Color::Red).fg(Color::Black)),
+        Span::raw(" Quit "),
+    ]))
+    .alignment(Alignment::Center);
+
     frame.render_widget(footer, chunks[2]);
 }
 
