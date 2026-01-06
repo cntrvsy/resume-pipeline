@@ -19,25 +19,25 @@ jobs:
     name: Build ${{ matrix.platform.name }}
     runs-on: ${{ matrix.platform.os }}
     strategy:
-      # FIX 1: Set this to false so one broken platform doesn't kill the release for everyone else
       fail-fast: false
       matrix:
         platform:
+          # --- LINUX (Standard GNU) ---
           - name: linux-x86_64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             ext: ""
+
+          # --- WINDOWS ---
           - name: windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
             ext: ".exe"
+
+          # --- MAC (Apple Silicon) ---
           - name: macos-silicon
             os: macos-latest
             target: aarch64-apple-darwin
-            ext: ""
-          - name: macos-intel
-            os: macos-13
-            target: x86_64-apple-darwin
             ext: ""
 
     steps:
@@ -48,8 +48,7 @@ jobs:
         with:
           targets: ${{ matrix.platform.target }}
 
-      # FIX 2: Explicitly force-install the target.
-      # This fixes the "can't find crate for std" error on Mac runners.
+      # Force install target to prevent "can't find crate for std" errors
       - name: Force Install Target
         run: rustup target add ${{ matrix.platform.target }}
 
@@ -77,20 +76,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. Zip the Data Folder
       - name: Zip Data Folder
         run: zip -r resume-data.zip data/
 
+      # 2. Download all built binaries
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
 
+      # 3. Create Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # This config grabs whatever files successfully built.
-          # If Mac Intel fails again, you still get the Windows/Linux/Mac-Silicon files.
           files: |
             resume-data.zip
             artifacts/*
