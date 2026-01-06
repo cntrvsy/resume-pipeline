@@ -1,7 +1,6 @@
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::Path;
 use typst::foundations::{Dict, IntoValue, Value};
 
 // 1. HELPER: Defaults new items to "Checked" in the UI
@@ -97,14 +96,15 @@ impl ResumeData {
 
         // Helper to read a file
         let read_yaml = |filename: &str| -> Result<String> {
-            let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-            let path = manifest_dir.join("data").join(filename);
+            // FIX: Use current_dir() to find the folder relative to where the user runs the app
+            // instead of baking in the build-server path.
+            let current_dir = std::env::current_dir()?;
+            let path = current_dir.join("data").join(filename);
 
             if !path.exists() {
                 return Err(color_eyre::eyre::eyre!(
-                    "File not found at: {:?}. (CARGO_MANIFEST_DIR={:?})",
-                    path,
-                    manifest_dir
+                    "File not found at: {:?}.\nPlease ensure the 'data' folder is in the same directory as the executable.",
+                    path
                 ));
             }
 
