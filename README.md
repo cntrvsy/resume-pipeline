@@ -1,33 +1,43 @@
 # Resume Pipeline
 
-A Terminal User Interface (TUI) application built with Ratatui that generates customized resumes from YAML data sources and exports them as PDFs using Typst.
+A Terminal User Interface (TUI) application built with Ratatui that generates custom **OPINIONATED** resumes from YAML data sources and exports them as PDFs using Typst.
 
-## Why?
+## Why (personal reason)
+- It was depressing spending 40 minutes on a resume and a cover letter to not even get a rejection email and creating AI slop resumes/cover letters in under 20 minutes wasn't getting me anywhere either. now i can spend 5 minutes on a resume and a cover letter and get a rejection email.
+- i was inspired by this video [CV Pipeline as Code: LaTeX, YAML, and GitHub Actions](https://www.youtube.com/watch?v=S2gpOr-mbf4) and i wanted to give back to the community with my own spin. 
 
-- A general resume doesn't cut it anymore. As someone who has studied Applied Computing Technology with a focus on Software Development, most hiring managers expect a more tailored and personalized resume. It's no longer just "front-end engineer" or "back-end engineer" but a "product implementation engineer" (yes, this was an actual job title and role involved basically creating UIs in Svelte, yeah...).
-- The job market is competitive, AI is great but that means it's harder to stand out, and having a personally crafted resume for each job you apply for can make a significant difference in getting noticed by potential employers as most recruiters apparently don't spend more than 20 seconds scanning through your resume.
-- This application allows users to create custom resumes by selecting relevant experience, education, and projects from YAML files, which are then formatted and styled using Typst templates.
-
-## Why not use Word or Google Docs?
-
-It's time consuming and depressing to spend 2 hours on a resume to not even get a rejection email. Plus depending on the Recruiter "influencer" you follow, some styles are just difficult to make work and fit your content requiring you to spend even more time on whatever [method](https://www.evidenced.app/blog/8-alternatives-to-star-method) they swear by. This application's goal is to allow users to create custom resumes quickly and easily by just selecting which points are relevant to said job title. Data is stored in YAML files, and the final PDF is generated using Typst.
+## Why (bigger picture)
+- As someone who has studied Applied Computing Technology with a focus on Software Development, most hiring managers expect a more tailored and personalized resume to the **LISTED** job title or job description. so my varied **EXPERIENCE** wasnt hitting the mark as they are looking for someone they can onboard with little friction meaning i needed to settle on a **TECH STACK**. It's no longer just "front-end engineer" or "back-end engineer" but a "product implementation engineer" (yes, this was an actual job title and role involved basically creating UIs in Svelte and basic CRUD backend with type safety, yeah...). This ultimately meant that i needed multiple resumes for different job titles and different tech stacks.
+- The job market is competitive, AI is great but that means it's harder to stand out and with most job recruiters i have followed on social media( the ones who arent trying to sell me something) have expressed their frustration with candidate fraud both at large and small scale.
+- Also, doing my research each job title has different expectations some like when you include statistics others don't, all agree you shouldnt have SKILLS section and they want to see how you used those skills(keyword + How it was used + the Result of using it and/or the Reason it was used). agree, disagree, i dont care because if you havent noticed this all depends on the Recruiter "influencer" you follow, some resume styles are just difficult to make work and harder to filter your content requiring you to spend even more time on whatever [method](https://www.evidenced.app/blog/8-alternatives-to-star-method) they swear by. This application's goal is to allow software engineers to create custom resumes quickly and easily by just selecting which points are relevant to said job title. Data is stored in YAML files, and the final PDF is generated using Typst. all this following this guy - [The Headless HeadHunter](https://www.headlessheadhunter.org/how-to-get-a-job).
 
 ## Features
 
-- **Interactive TUI**: Navigate through your resume data with an intuitive terminal interface
-- **Multi-section selection**: Choose from your profile, education, experience, and projects
-- **Live selection**: Toggle which items to include in your final resume using checkboxes
+- **Straightforward Interface**: Literally just click enter.
+- **Multi-section selection**: Choose from your profile, education, experience, and projects.
+- **Live selection**: Toggle which items to include in your final resume using checkboxes.
 - **PDF export**: Automatically generates a professional PDF using Typst templates
 - **YAML-based data**: Easy to maintain and version control your resume data
 
-## Installation
+
+## How do I use it?
+- Grab the latest release from the [releases page](https://github.com/yourusername/resume-pipeline/releases).
+- Be sure to download the resume-data.zip file from the same release.
+- Unzip the resume-data.zip file and place it in the same directory as the resume-pipeline executable.
+- open your terminal your terminal of choice,(if your using powershell its done differently etc, im using linux so mine looks like this)
+```
+./resume-pipeline-linux-x86_64
+```
+- majority of your time should be spend editing the provided YAML files in the resume-data directory, using a text editor of your choice use the format provided it breaks otherwise.
+**TAKE NOTE OF THE INTERNAL STRUCTURE OF THE YAML FILES**
+
+## Building from Source
 
 ### Prerequisites
-
 - Rust toolchain (1.70 or later)
 - Cargo package manager
 
-### Build from source
+### Commands
 
 ```bash
 git clone <repository-url>
@@ -39,27 +49,20 @@ The binary will be available at `target/release/resume-pipeline`
 
 ## Usage
 
-### 1. Prepare Your Data
+### 1. Your Data
 
-Create YAML files in the `data/` directory:
+Inside the `data/` directory you'll find:
 
-- `data/profile.yaml` - Your personal information
-- `data/education.yaml` - Educational background
-- `data/experience.yaml` - Work experience
-- `data/projects.yaml` - Side projects and portfolio
+- `profile.yaml` - Your personal information
+- `education.yaml` - Educational background
+- `experience.yaml` - Work experience
+- `projects.yaml` - Side projects and portfolio
+- `jobtitles.yaml` - Job titles
 
-Example structure for `experience.yaml`:
+- `output/resume.pdf` - Your generated resume
+- `templates/headless_head_hunter.typ` - You are also free to copy paste this template into the [typst app](https://typst.app) it works by itself plus the online editor is really amazing.
 
-```yaml
-- role: "Software Developer"
-  company: "Company Name"
-  location: "City, Country"
-  date: "June 2023 - Current"
-  summary: "Brief description of role"
-  bullets:
-    - "Achievement or responsibility 1"
-    - "Achievement or responsibility 2"
-```
+**TAKE NOTE OF THE INTERNAL STRUCTURE OF THE YAML FILES**
 
 ### 2. Run the Application
 
