@@ -11,6 +11,29 @@ A Terminal User Interface (TUI) application built with Ratatui that generates cu
 - The job market is competitive, AI is great but that means it's harder to stand out and with most job recruiters i have followed on social media( the ones who arent trying to sell me something) have expressed their frustration with candidate fraud both at large and small scale.
 - Also, doing my research each job title has different expectations some like when you include statistics others don't, all agree you shouldnt have SKILLS section and they want to see how you used those skills(keyword + How it was used + the Result of using it and/or the Reason it was used). agree, disagree, i dont care because if you havent noticed this all depends on the Recruiter "influencer" you follow, some resume styles are just difficult to make work and harder to filter your content requiring you to spend even more time on whatever [method](https://www.evidenced.app/blog/8-alternatives-to-star-method) they swear by. This application's goal is to allow software engineers to create custom resumes quickly and easily by just selecting which points are relevant to said job title. Data is stored in YAML files, and the final PDF is generated using Typst. all this following this guy - [The Headless HeadHunter](https://www.headlessheadhunter.org/how-to-get-a-job).
 
+
+## Project Structure
+```
+src/
+├── main.rs           # Entry point
+├── app.rs            # App state & event handling
+├── pdf.rs            # PDF generation
+├── typst_backend.rs  # Typst integration
+├── models/           # Data models
+│   ├── mod.rs
+│   ├── types.rs      # Struct definitions
+│   └── resume.rs     # Loading logic
+└── ui/               # Render logic
+    ├── mod.rs
+    ├── welcome.rs
+    ├── profile.rs
+    ├── education.rs
+    ├── experience.rs
+    ├── projects.rs
+    ├── job_titles.rs
+    └── status.rs
+```
+
 ## Features
 
 - **Straightforward Interface**: Literally just click enter.
