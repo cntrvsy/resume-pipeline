@@ -66,11 +66,11 @@
   v(1em)
 }
 
-// Job Title: Bold & Navy
+// Job Title: Bold
 #let job_title_component(title) = {
   align(center)[
     #v(-0.5em)
-    #text(size: 12pt, weight: "bold", fill: navy)[#title]
+    #text(size: 12pt, weight: "bold", fill: black)[#title]
     #v(0.5em)
   ]
 }
