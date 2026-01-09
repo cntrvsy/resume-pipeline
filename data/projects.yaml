@@ -4,3 +4,8 @@
       tech_stack:
         - Rust + Built CLI logic using Ratatui.
         - Typst + Automated PDF generation from JSON payloads.
+- projects:
+    - title: Calculator App
+      description: A simple calculator app built with Svelte.
+      tech_stack:
+        - Svelte + Tailwind CSS + Vite.
