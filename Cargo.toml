@@ -15,7 +15,7 @@ serde_yaml = "0.9"
 serde_json = "1.0"
 
 # --- TYPST CORE DEPS ---
-typst = "0.12.0"       # Core compiler
+typst = "0.14.2"       # Core compiler
 typst-pdf = "0.12.0"   # PDF exporter
 time = "0.3"           # Required for the 'World' environment
 comemo = "0.4"         # Typst's caching system
