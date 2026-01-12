@@ -53,7 +53,7 @@ jobs:
         run: rustup target add ${{ matrix.platform.target }}
 
       - name: Build Binary
-        run: cargo build --release --target ${{ matrix.platform.target }}
+        run: cargo build --release --locked --target ${{ matrix.platform.target }}
 
       - name: Rename Binary
         shell: bash

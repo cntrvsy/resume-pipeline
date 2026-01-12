@@ -2,6 +2,8 @@
 
 A Terminal User Interface (TUI) application built with Ratatui that generates custom **OPINIONATED** resumes from YAML data sources and exports them as PDFs using Typst.
 
+![App Screenshot](assets/screenshot.png)
+
 ## Why (personal reason)
 - It was depressing spending 40 minutes on a resume and a cover letter to not even get a rejection email and creating AI slop resumes/cover letters in under 20 minutes wasn't getting me anywhere either. now i can spend 5 minutes on a resume and a cover letter and get a rejection email.
 - i was inspired by this video [CV Pipeline as Code: LaTeX, YAML, and GitHub Actions](https://www.youtube.com/watch?v=S2gpOr-mbf4) and i wanted to give back to the community with my own spin. 
@@ -164,9 +166,7 @@ If you see errors about missing YAML files, ensure:
 
 If PDF generation fails:
 1. Check the error message on the error screen
-2. Verify the template exists at `.github/templates/headless_head_hunter.typ`
-3. Ensure the `output/` directory is writable
-4. Check that `output/payload.json` was created and contains valid JSON
+2. Be sure that the YAML Files are formatted correctly
 
 ### Template not receiving data
 
@@ -185,15 +185,10 @@ Make sure your terminal supports the key bindings:
 - Try using arrow keys instead of `j`/`k`
 - Ensure your terminal emulator is properly configured
 
-### Application crashes on startup
-
-1. Check that all dependencies are installed: `cargo check`
-2. Verify Rust version: `rustc --version` (should be 1.70+)
-3. Run with detailed errors: `RUST_BACKTRACE=1 cargo run`
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+Contributions are welcome! Please feel free to submit issues or pull requests buth rather be sure to FORK the repo and trully make it your own.
 
 ## License
 
