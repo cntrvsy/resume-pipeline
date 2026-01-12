@@ -2,7 +2,8 @@
 
 A Terminal User Interface (TUI) application built with Ratatui that generates custom **OPINIONATED** resumes from YAML data sources and exports them as PDFs using Typst.
 
-![App Screenshot](assets/screenshot.png)
+![resume_pipeline_vid](https://github.com/user-attachments/assets/7cc5fd6d-a41c-4e28-9174-e3769559cfd8)
+
 
 ## Why (personal reason)
 - It was depressing spending 40 minutes on a resume and a cover letter to not even get a rejection email and creating AI slop resumes/cover letters in under 20 minutes wasn't getting me anywhere either. now i can spend 5 minutes on a resume and a cover letter and get a rejection email.
