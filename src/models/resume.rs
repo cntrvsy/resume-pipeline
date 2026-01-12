@@ -1,10 +1,10 @@
-use color_eyre::Result;
-use serde::{Deserialize, Serialize};
-use std::fs;
 use super::types::{
     Education, EducationWrapper, Experience, FilteredResumeData, JobTitle, Profile, Project,
     ProjectsWrapper,
 };
+use color_eyre::Result;
+use serde::{Deserialize, Serialize};
+use std::fs;
 
 // The Master Container
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -24,8 +24,8 @@ impl ResumeData {
         let mut data = ResumeData::default();
 
         // DEBUG: Print where the app thinks it is running
-        let current_dir = std::env::current_dir()?;
-        eprintln!("DEBUG: Running in: {:?}", current_dir);
+        //let current_dir = std::env::current_dir()?;
+        //eprintln!("DEBUG MESSAGE: I am running in: {:?}", current_dir);
 
         // Helper to read a file
         let read_yaml = |filename: &str| -> Result<String> {
