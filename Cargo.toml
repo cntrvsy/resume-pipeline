@@ -1,6 +1,6 @@
 [package]
 name = "resume-pipeline"
-version = "0.2.5"
+version = "1.0.0"
 description = "create multiple resumes from a YAML source"
 authors = ["cntrvsy <benintangana@gmail.com>"]
 license = "MIT"
