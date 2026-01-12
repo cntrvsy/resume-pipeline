@@ -2,6 +2,9 @@
 
 A Terminal User Interface (TUI) application built with Ratatui that generates custom **OPINIONATED** resumes from YAML data sources and exports them as PDFs using Typst.
 
+![resume_pipeline_vid](https://github.com/user-attachments/assets/7cc5fd6d-a41c-4e28-9174-e3769559cfd8)
+
+
 ## Why (personal reason)
 - It was depressing spending 40 minutes on a resume and a cover letter to not even get a rejection email and creating AI slop resumes/cover letters in under 20 minutes wasn't getting me anywhere either. now i can spend 5 minutes on a resume and a cover letter and get a rejection email.
 - i was inspired by this video [CV Pipeline as Code: LaTeX, YAML, and GitHub Actions](https://www.youtube.com/watch?v=S2gpOr-mbf4) and i wanted to give back to the community with my own spin. 
@@ -46,12 +49,21 @@ src/
 ## How do I use it?
 - Grab the latest release from the [releases page](https://github.com/yourusername/resume-pipeline/releases).
 - Be sure to download the resume-data.zip file from the same release.
-- Unzip the resume-data.zip file and place it in the same directory as the resume-pipeline executable.
+- Unzip the resume-data.zip file and place its contents in the same directory as the resume-pipeline executable. The folder should look like this:
+```
+resume-pipeline-linux-x86_64(example executable)
+data/
+├── education.yaml
+├── experience.yaml
+├── jobtitles.yaml
+├── profile.yaml
+└── projects.yaml etc...
+```
 - open your terminal your terminal of choice,(if your using powershell its done differently etc, im using linux so mine looks like this)
 ```
 ./resume-pipeline-linux-x86_64
 ```
-- majority of your time should be spend editing the provided YAML files in the resume-data directory, using a text editor of your choice use the format provided it breaks otherwise.
+- majority of your time should be spend editing the provided YAML files in the data directory, using a text editor of your choice use the format provided it breaks otherwise.
 **TAKE NOTE OF THE INTERNAL STRUCTURE OF THE YAML FILES**
 
 ## Building from Source
@@ -164,9 +176,7 @@ If you see errors about missing YAML files, ensure:
 
 If PDF generation fails:
 1. Check the error message on the error screen
-2. Verify the template exists at `.github/templates/headless_head_hunter.typ`
-3. Ensure the `output/` directory is writable
-4. Check that `output/payload.json` was created and contains valid JSON
+2. Be sure that the YAML Files are formatted correctly
 
 ### Template not receiving data
 
@@ -185,15 +195,10 @@ Make sure your terminal supports the key bindings:
 - Try using arrow keys instead of `j`/`k`
 - Ensure your terminal emulator is properly configured
 
-### Application crashes on startup
-
-1. Check that all dependencies are installed: `cargo check`
-2. Verify Rust version: `rustc --version` (should be 1.70+)
-3. Run with detailed errors: `RUST_BACKTRACE=1 cargo run`
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+Contributions are welcome! Please feel free to submit issues or pull requests buth rather be sure to FORK the repo and trully make it your own.
 
 ## License
 
