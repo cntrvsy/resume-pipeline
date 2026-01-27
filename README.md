@@ -47,7 +47,7 @@ src/
 
 
 ## How do I use it?
-- Grab the latest release from the [releases page](https://github.com/yourusername/resume-pipeline/releases).
+- Grab the latest release from the [releases page](https://github.com/cntrvsy/resume-pipeline/releases).
 - Be sure to download the resume-data.zip file from the same release.
 - Unzip the resume-data.zip file and place its contents in the same directory as the resume-pipeline executable. The folder should look like this:
 ```
