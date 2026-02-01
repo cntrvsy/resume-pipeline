@@ -105,7 +105,7 @@ impl ResumeData {
                     }
                 }
             }
-            Err(e) => eprintln!("Warning: Could not load education.yaml: {}", e),
+            Err(e) => eprintln!("Warning: Could not load prof.yaml: {}", e),
         }
 
         // Load Skills
