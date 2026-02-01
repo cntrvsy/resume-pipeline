@@ -1,6 +1,6 @@
 use super::types::{
-    Education, EducationWrapper, Experience, FilteredResumeData, JobTitle, Profile, Project,
-    ProjectsWrapper,
+    Education, EducationWrapper, Experience, FilteredResumeData, JobTitle, Prof, ProfWrapper,
+    Profile, Project, ProjectsWrapper, Skill, SkillsWrapper,
 };
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
@@ -11,6 +11,8 @@ use std::fs;
 pub struct ResumeData {
     pub profile: Option<Profile>,
     pub education: Vec<Education>,
+    pub prof: Vec<Prof>,
+    pub skills: Vec<Skill>,
     pub experience: Vec<Experience>,
     pub projects: Vec<Project>,
     pub job_title: Option<String>,
@@ -87,6 +89,44 @@ impl ResumeData {
             Err(e) => eprintln!("Warning: Could not load education.yaml: {}", e),
         }
 
+        // Load Professonal Profile
+        match read_yaml("prof.yaml") {
+            Ok(edu_str) => {
+                if !edu_str.is_empty() {
+                    // Parse the wrapper structure
+                    let wrappers: Vec<ProfWrapper> =
+                        serde_yaml::from_str(&edu_str).map_err(|e| {
+                            color_eyre::eyre::eyre!("YAML Parsing Error in prof.yaml: {}", e)
+                        })?;
+
+                    // Flatten the nested structure
+                    for wrapper in wrappers {
+                        data.prof.extend(wrapper.prof);
+                    }
+                }
+            }
+            Err(e) => eprintln!("Warning: Could not load prof.yaml: {}", e),
+        }
+
+        // Load Skills
+        match read_yaml("skills.yaml") {
+            Ok(skills_str) => {
+                if !skills_str.is_empty() {
+                    // Parse the wrapper structure
+                    let wrappers: Vec<SkillsWrapper> =
+                        serde_yaml::from_str(&skills_str).map_err(|e| {
+                            color_eyre::eyre::eyre!("YAML Parsing Error in skills.yaml: {}", e)
+                        })?;
+
+                    // Flatten the nested structure
+                    for wrapper in wrappers {
+                        data.skills.extend(wrapper.skills);
+                    }
+                }
+            }
+            Err(e) => eprintln!("Warning: Could not load skills.yaml: {}", e),
+        }
+
         // Load Experience
         match read_yaml("experience.yaml") {
             Ok(exp_str) => {
@@ -136,6 +176,13 @@ impl ResumeData {
                 .education
                 .iter()
                 .filter(|e| e.is_visible)
+                .cloned()
+                .collect(),
+            prof: self.prof.iter().filter(|e| e.is_visible).cloned().collect(),
+            skills: self
+                .skills
+                .iter()
+                .filter(|s| s.is_visible)
                 .cloned()
                 .collect(),
             experience: self

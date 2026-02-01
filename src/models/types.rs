@@ -35,6 +35,24 @@ pub struct Education {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Prof {
+    pub title: String,
+    pub details: String,
+    // UI STATE
+    #[serde(skip, default = "default_true")]
+    pub is_visible: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Skill {
+    pub title: String,
+    pub details: String,
+    // UI STATE
+    #[serde(skip, default = "default_true")]
+    pub is_visible: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Experience {
     pub role: String,
     pub company: String,
@@ -64,6 +82,8 @@ pub struct Project {
 pub struct FilteredResumeData {
     pub profile: Profile,
     pub education: Vec<Education>,
+    pub prof: Vec<Prof>,
+    pub skills: Vec<Skill>,
     pub experience: Vec<Experience>,
     pub projects: Vec<Project>,
     pub job_title: String,
@@ -73,6 +93,16 @@ pub struct FilteredResumeData {
 #[derive(Debug, Deserialize)]
 pub struct EducationWrapper {
     pub education: Vec<Education>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ProfWrapper {
+    pub prof: Vec<Prof>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SkillsWrapper {
+    pub skills: Vec<Skill>,
 }
 
 // Wrapper for projects YAML parsing
@@ -106,6 +136,24 @@ impl IntoValue for Education {
     }
 }
 
+impl IntoValue for Prof {
+    fn into_value(self) -> Value {
+        let mut dict = Dict::new();
+        dict.insert("title".into(), self.title.into_value());
+        dict.insert("details".into(), self.details.into_value());
+        Value::Dict(dict)
+    }
+}
+
+impl IntoValue for Skill {
+    fn into_value(self) -> Value {
+        let mut dict = Dict::new();
+        dict.insert("title".into(), self.title.into_value());
+        dict.insert("details".into(), self.details.into_value());
+        Value::Dict(dict)
+    }
+}
+
 impl IntoValue for Experience {
     fn into_value(self) -> Value {
         let mut dict = Dict::new();
@@ -134,6 +182,8 @@ impl From<FilteredResumeData> for Dict {
         let mut dict = Dict::new();
         dict.insert("profile".into(), val.profile.into_value());
         dict.insert("education".into(), val.education.into_value());
+        dict.insert("prof".into(), val.prof.into_value());
+        dict.insert("skills".into(), val.skills.into_value());
         dict.insert("experience".into(), val.experience.into_value());
         dict.insert("projects".into(), val.projects.into_value());
         dict.insert("job_title".into(), val.job_title.into_value());

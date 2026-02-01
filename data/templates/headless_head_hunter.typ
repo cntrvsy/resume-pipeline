@@ -15,6 +15,12 @@
   education: (
     (school: "University of Preview", degree: "B.Sc. Computer Science", status: "Graduated"),
   ),
+  prof: (
+    (title: "Blockchain", details: "Bitcoin (Ordinals, Taproot), EVM (Solidity, Ethers.js, Wagmi/Viem), Cross-Chain Bridges, Multi-platform Wallet Development."),
+  ),
+  skills: (
+    (title: "Programming Languages", details: "Rust, TypeScript, Python"),
+  ),
   experience: (
     (
       role: "Senior Developer",
@@ -34,7 +40,7 @@
 // -------
 #set page(
   paper: "us-letter",
-  margin: (x: 1in, y: 0.75in),
+  margin: (x: 0.75in, y: 0.5in),
 )
 
 // GLOBAL RESET:
@@ -58,9 +64,11 @@
   align(center)[
     #text(size: 14pt, weight: "bold")[#profile.name]
     #v(-0.3em)
-    #text(size: 12pt)[ // Inherits Regular
-      #profile.phone | #profile.email | #profile.url \
-      #profile.citizenship at #profile.location
+    #text(size: 9pt)[ // Inherits Regular
+      #profile.email | #profile.url | #profile.location
+      // Just kept it here for the reference
+      // #profile.phone | #profile.email | #profile.url \
+      // #profile.citizenship at #profile.location
     ]
   ]
   v(1em)
@@ -71,14 +79,13 @@
   align(center)[
     #v(-0.5em)
     #text(size: 12pt, weight: "bold", fill: black)[#title]
-    #v(0.5em)
   ]
 }
 
 // Section Title: Bold
 #let section_title(title) = {
   v(0.5em)
-  text(size: 10.5pt, weight: "bold")[#title]
+  text(size: 12pt, weight: "bold")[#title]
   v(0.2em)
 }
 
@@ -92,11 +99,29 @@
   v(0.3em)
 }
 
+// Prof Profile Item
+#let prof_profile_item(title, details) = {
+  grid(
+    columns: (1fr, auto),
+    [#text(weight: "bold", size: 10pt)[#title]: #text(size: 10pt)[#details]]
+  )
+  v(-0.5em)
+}
+
+// Skill Item
+#let skill_item(title, details) = {
+  grid(
+    columns: (1fr, auto),
+    [#text(weight: "bold", size: 10pt)[#title]: #text(size: 10pt)[#details]]
+  )
+  v(-0.5em)
+}
+
 // Work Item: Strictly Regular
 #let work_item(role, company, location, date, summary, highlights) = {
   grid(
     columns: (1fr, auto),
-    [#role #text(style: "italic")[at #company, #location]],
+    [#text(weight: "bold")[#role] #text(style: "italic")[at #company, #location]],
     text(style: "italic")[#date]
   )
 
@@ -106,12 +131,14 @@
   }
 
   if highlights != none {
+    v(-0.2em)
     for point in highlights {
-      list(marker: [•], body-indent: 0.5em)[#point]
+      list(marker: [•], body-indent: 0.9em)[#point]
+      v(-0.5em)
     }
   }
 
-  v(0.8em)
+  v(0.75em)
 }
 
 // 3. RENDER
@@ -120,12 +147,24 @@
 
 #job_title_component(resume_data.at("job_title", default: "Software Engineer"))
 
-#section_title("Education & Certificates")
-#for edu in resume_data.education [
-  #edu_item(edu.degree, edu.school, edu.status)
+#v(0.2em)
+#section_title("Professional Profile")
+#v(-0.3em)
+
+#for itm in resume_data.prof [
+  #prof_profile_item(itm.title, itm.details)
 ]
 
+#v(0.5em)
+#section_title("Skills")
+#v(-0.3em)
+#for itm in resume_data.skills [
+  #skill_item(itm.title, itm.details)
+]
+
+#v(1em)
 #section_title("Work History")
+#v(-0.1em)
 #for job in resume_data.experience [
   #work_item(
     job.role,
@@ -135,6 +174,11 @@
     job.summary,
     job.bullets
   )
+]
+
+#section_title("Education & Certificates")
+#for edu in resume_data.education [
+  #edu_item(edu.degree, edu.school, edu.status)
 ]
 
 #if resume_data.projects != none [

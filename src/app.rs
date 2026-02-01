@@ -1,7 +1,7 @@
-use crossterm::event::KeyCode;
-use ratatui::widgets::ListState;
 use crate::models::ResumeData;
 use crate::pdf::generate_pdf;
+use crossterm::event::KeyCode;
+use ratatui::widgets::ListState;
 
 // 1. STATE MANAGEMENT
 #[derive(Debug, PartialEq)]
