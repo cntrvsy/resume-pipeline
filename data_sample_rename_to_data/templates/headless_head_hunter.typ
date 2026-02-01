@@ -66,6 +66,7 @@
     #v(-0.3em)
     #text(size: 9pt)[ // Inherits Regular
       #profile.email | #profile.url | #profile.location
+      // Just kept it here for the reference
       // #profile.phone | #profile.email | #profile.url \
       // #profile.citizenship at #profile.location
     ]
@@ -78,14 +79,12 @@
   align(center)[
     #v(-0.5em)
     #text(size: 12pt, weight: "bold", fill: black)[#title]
-    // #v(1em)
   ]
 }
 
 // Section Title: Bold
 #let section_title(title) = {
   v(0.5em)
-  // text(size: 10.5pt, weight: "bold")[#title]
   text(size: 12pt, weight: "bold")[#title]
   v(0.2em)
 }
@@ -134,7 +133,6 @@
   if highlights != none {
     v(-0.2em)
     for point in highlights {
-      // list(marker: [•], body-indent: 0.3em)[#point]
       list(marker: [•], body-indent: 0.9em)[#point]
       v(-0.5em)
     }
@@ -183,16 +181,16 @@
   #edu_item(edu.degree, edu.school, edu.status)
 ]
 
-// #if resume_data.projects != none [
-//   #section_title("Projects")
-//   #for proj in resume_data.projects [
-//     #work_item(
-//       proj.title,
-//       "Side Project",
-//       "",
-//       "",
-//       proj.description,
-//       proj.tech_stack
-//     )
-//   ]
-// ]
+#if resume_data.projects != none [
+  #section_title("Projects")
+  #for proj in resume_data.projects [
+    #work_item(
+      proj.title,
+      "Side Project",
+      "",
+      "",
+      proj.description,
+      proj.tech_stack
+    )
+  ]
+]
