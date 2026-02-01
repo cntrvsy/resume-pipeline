@@ -1,5 +1,4 @@
-pub mod types;
 pub mod resume;
+pub mod types;
 
-pub use types::*;
 pub use resume::*;
