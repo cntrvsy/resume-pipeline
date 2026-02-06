@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Layout},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Paragraph},
-    Frame,
 };
 
 use crate::app::App;
@@ -38,6 +38,10 @@ pub fn render_profile_screen(frame: &mut Frame, app: &App) {
             Line::from(vec![
                 Span::styled("URL: ", Style::default().fg(Color::Cyan)),
                 Span::raw(&profile.url),
+            ]),
+            Line::from(vec![
+                Span::styled("Website: ", Style::default().fg(Color::Cyan)),
+                Span::raw(&profile.website),
             ]),
             Line::from(vec![
                 Span::styled("Location: ", Style::default().fg(Color::Cyan)),

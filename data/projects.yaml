@@ -1,11 +1,13 @@
 - projects:
     - title: Resume TUI Generator
+      url: github.com/user/resume-tui
       description: A Rust-based terminal tool to generate dynamic resumes.
       tech_stack:
         - Rust + Built CLI logic using Ratatui.
         - Typst + Automated PDF generation from JSON payloads.
 - projects:
     - title: Calculator App
+      url: calculator.example.com
       description: A simple calculator app built with Svelte.
       tech_stack:
         - Svelte + Tailwind CSS + Vite.
