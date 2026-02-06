@@ -14,6 +14,7 @@ pub struct Profile {
     pub email: String,
     pub phone: String,
     pub url: String,
+    pub website: String,
     pub location: String,
     pub citizenship: String,
 }
@@ -51,6 +52,7 @@ pub struct Experience {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
     pub title: String,
+    pub url: Option<String>,
     pub description: String,
     pub tech_stack: Vec<String>,
 
@@ -90,6 +92,7 @@ impl IntoValue for Profile {
         dict.insert("email".into(), self.email.into_value());
         dict.insert("phone".into(), self.phone.into_value());
         dict.insert("url".into(), self.url.into_value());
+        dict.insert("website".into(), self.website.into_value());
         dict.insert("location".into(), self.location.into_value());
         dict.insert("citizenship".into(), self.citizenship.into_value());
         Value::Dict(dict)
@@ -123,6 +126,7 @@ impl IntoValue for Project {
     fn into_value(self) -> Value {
         let mut dict = Dict::new();
         dict.insert("title".into(), self.title.into_value());
+        dict.insert("url".into(), self.url.into_value());
         dict.insert("description".into(), self.description.into_value());
         dict.insert("tech_stack".into(), self.tech_stack.into_value());
         Value::Dict(dict)

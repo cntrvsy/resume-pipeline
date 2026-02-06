@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Paragraph},
-    Frame,
 };
 
 pub fn render_welcome_screen(frame: &mut Frame) {
@@ -24,7 +24,7 @@ pub fn render_welcome_screen(frame: &mut Frame) {
 
     let title_block = Block::bordered()
         .border_style(Style::default().fg(Color::Cyan))
-        .title(" CV GEN v0.2 ")
+        .title(" CV GEN v1.1 ")
         .title_alignment(Alignment::Center);
 
     let welcome_text = vec![

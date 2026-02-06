@@ -129,6 +129,7 @@ impl ResumeData {
                 email: "unknown@example.com".to_string(),
                 phone: "N/A".to_string(),
                 url: "N/A".to_string(),
+                website: "N/A".to_string(),
                 location: "N/A".to_string(),
                 citizenship: "N/A".to_string(),
             }),

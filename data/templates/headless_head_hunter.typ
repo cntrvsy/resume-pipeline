@@ -8,6 +8,7 @@
     email: "user@example.com",
     phone: "555-0100",
     url: "linkedin.com/in/preview",
+    website: "example.com",
     location: "City, Country",
     citizenship: "Citizen"
   ),
@@ -59,7 +60,7 @@
     #text(size: 14pt, weight: "bold")[#profile.name]
     #v(-0.3em)
     #text(size: 12pt)[ // Inherits Regular
-      #profile.phone | #profile.email | #profile.url \
+      #profile.phone | #link("mailto:" + profile.email)[#profile.email] | #link("https://" + profile.url)[LinkedIn] | #link("https://" + profile.website)[Personal Website] \
       #profile.citizenship at #profile.location
     ]
   ]
@@ -93,10 +94,16 @@
 }
 
 // Work Item: Strictly Regular
-#let work_item(role, company, location, date, summary, highlights) = {
+#let work_item(role, company, location, date, summary, highlights, url: none) = {
   grid(
     columns: (1fr, auto),
-    [#role #text(style: "italic")[at #company, #location]],
+    [
+      #role
+      #text(style: "italic")[at #company, #location]
+      #if url != none [
+        | #link("https://" + url)[Link]
+      ]
+    ],
     text(style: "italic")[#date]
   )
 
@@ -146,7 +153,8 @@
       "",
       "",
       proj.description,
-      proj.tech_stack
+      proj.tech_stack,
+      url: proj.at("url", default: none)
     )
   ]
 ]
