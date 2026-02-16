@@ -337,10 +337,23 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df6916408a724339aa77b18214233355f3eb04c42eb895e5f8909215bd8a7a91"
 dependencies = [
- "comemo-macros",
+ "comemo-macros 0.4.0",
  "once_cell",
  "parking_lot",
  "siphasher",
+]
+
+[[package]]
+name = "comemo"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "649d7b2d867b569729c03c0f6968db10bc95921182a1f2b2012b1b549492f39d"
+dependencies = [
+ "comemo-macros 0.5.0",
+ "parking_lot",
+ "rustc-hash",
+ "siphasher",
+ "slab",
 ]
 
 [[package]]
@@ -348,6 +361,17 @@ name = "comemo-macros"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8936e42f9b4f5bdfaf23700609ac1f11cb03ad4c1ec128a4ee4fd0903e228db"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "comemo-macros"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51c87fc7e85487493ddedae1a3a34b897c77ad8825375b79265a8a162c28d535"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1799,7 +1823,7 @@ version = "1.1.0"
 dependencies = [
  "bytes",
  "color-eyre",
- "comemo",
+ "comemo 0.5.0",
  "crossterm",
  "ratatui",
  "serde",
@@ -2063,6 +2087,12 @@ dependencies = [
  "bytemuck",
  "read-fonts",
 ]
+
+[[package]]
+name = "slab"
+version = "0.4.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 
 [[package]]
 name = "slotmap"
@@ -2512,7 +2542,7 @@ dependencies = [
  "bumpalo",
  "chinese-number",
  "ciborium",
- "comemo",
+ "comemo 0.4.0",
  "csv",
  "ecow",
  "flate2",
@@ -2596,7 +2626,7 @@ dependencies = [
  "arrayvec",
  "base64",
  "bytemuck",
- "comemo",
+ "comemo 0.4.0",
  "ecow",
  "image",
  "indexmap",
