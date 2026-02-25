@@ -95,7 +95,7 @@ Inside the `data/` directory you'll find:
 - `jobtitles.yaml` - Job titles
 
 - `output/resume.pdf` - Your generated resume
-- `templates/headless_head_hunter.typ` - You are also free to copy paste this template into the [typst app](https://typst.app) it works by itself plus the online editor is really amazing.
+- `templates/default_resume_template.typ` - You are also free to copy paste this template into the [typst app](https://typst.app) it works by itself plus the online editor is really amazing.
 
 **TAKE NOTE OF THE INTERNAL STRUCTURE OF THE YAML FILES**
 
@@ -131,7 +131,7 @@ Your generated resume will be saved to `output/resume.pdf`
 
 ## Customizing the Template
 
-The Typst template is located at `.github/templates/headless_head_hunter.typ`. You can modify this file to change the appearance and layout of your resume.
+The Typst template is located at `.github/templates/default_resume_template.typ`. You can modify this file to change the appearance and layout of your resume.
 
 The template receives your filtered data directly from Rust via Typst's `sys.inputs` mechanism - no JSON files needed! The data is passed in-memory using the `compile_with_input()` function.
 
@@ -145,7 +145,7 @@ resume-pipeline/
 │   ├── experience.yaml
 │   └── projects.yaml
 ├── .github/templates/      # Typst templates
-│   └── headless_head_hunter.typ
+│   └── default_resume_template.typ
 ├── src/
 │   ├── main.rs            # TUI application logic
 │   └── models.rs          # Data structures and YAML parsing

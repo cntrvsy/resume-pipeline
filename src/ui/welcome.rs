@@ -24,7 +24,7 @@ pub fn render_welcome_screen(frame: &mut Frame) {
 
     let title_block = Block::bordered()
         .border_style(Style::default().fg(Color::Cyan))
-        .title(" CV GEN v1.1 ")
+        .title(" CV GEN v1.2.2 ")
         .title_alignment(Alignment::Center);
 
     let welcome_text = vec![
