@@ -11,7 +11,7 @@ mod ui;
 use app::{App, CurrentScreen};
 use ui::render_ui;
 
-// 3. ENTRY POINT
+// ENTRY POINT
 fn main() -> Result<()> {
     color_eyre::install()?;
     let mut terminal = ratatui::init();
@@ -20,7 +20,7 @@ fn main() -> Result<()> {
     app_result
 }
 
-// 4. APPLICATION LOOP
+// APPLICATION LOOP
 fn run(terminal: &mut DefaultTerminal) -> Result<()> {
     let mut app = App::new();
 

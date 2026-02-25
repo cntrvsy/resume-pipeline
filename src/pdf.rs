@@ -14,11 +14,21 @@ pub fn generate_pdf(data: &ResumeData) -> Result<String> {
         fs::create_dir(output_dir)?;
     }
 
-    // Load template
-    // Note: Assuming you are using include_str! for the embedded solution
-    // If you are reading from disk for dev, ensure the path is correct
-    let template_path = Path::new("data/templates/headless_head_hunter.typ");
-    let template_content = fs::read_to_string(template_path).expect("Could not read template file");
+    // Load template using current_dir to align with models.rs
+    let current_dir = std::env::current_dir()?;
+    let template_path = current_dir
+        .join("data")
+        .join("templates")
+        .join("default_resume_template.typ");
+
+    if !template_path.exists() {
+        return Err(color_eyre::eyre::eyre!(
+            "Template file not found at: {:?}.\nPlease ensure the 'data' folder containing your templates is in the same directory as the executable.",
+            template_path
+        ));
+    }
+
+    let template_content = fs::read_to_string(&template_path)?;
 
     // Convert Data
     let filtered_data = data.to_filtered_data();
