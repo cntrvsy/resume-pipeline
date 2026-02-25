@@ -198,7 +198,7 @@ Make sure your terminal supports the key bindings:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests buth rather be sure to FORK the repo and trully make it your own.
+Contributions are welcome! Please feel free to submit issues or pull requests but rather be sure to FORK the repo and trully make it your own.
 
 ## License
 
