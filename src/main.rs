@@ -35,3 +35,6 @@ fn run(terminal: &mut DefaultTerminal) -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;

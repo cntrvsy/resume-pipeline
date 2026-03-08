@@ -47,6 +47,8 @@ pub struct Experience {
     // UI STATE: Not in YAML, only in App
     #[serde(skip, default = "default_true")]
     pub is_visible: bool,
+    #[serde(skip)]
+    pub hidden_bullets: Vec<usize>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

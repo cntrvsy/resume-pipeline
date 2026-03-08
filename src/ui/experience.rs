@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::{Alignment, Constraint, Layout},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, List, ListItem, Paragraph},
-    Frame,
 };
 
 use crate::app::App;
@@ -50,6 +50,8 @@ pub fn render_experience_screen(frame: &mut Frame, app: &mut App) {
             Style::default().bg(Color::Yellow).fg(Color::Black),
         ),
         Span::raw(" Back    "),
+        Span::styled(" <e> ", Style::default().bg(Color::Cyan).fg(Color::Black)),
+        Span::raw(" Edit Bullets    "),
         Span::styled(
             " <Enter> ",
             Style::default().bg(Color::Green).fg(Color::Black),

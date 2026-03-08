@@ -4,6 +4,7 @@ use crate::app::{App, CurrentScreen};
 
 mod education;
 mod experience;
+mod experience_bullets;
 mod job_titles;
 mod profile;
 mod projects;
@@ -18,6 +19,9 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
         CurrentScreen::JobTitleSelection => job_titles::render_job_title_screen(frame, app),
         CurrentScreen::EducationSelection => education::render_education_screen(frame, app),
         CurrentScreen::ExperienceSelection => experience::render_experience_screen(frame, app),
+        CurrentScreen::ExperienceBulletSelection => {
+            experience_bullets::render_experience_bullet_screen(frame, app)
+        }
         CurrentScreen::ProjectsSelection => projects::render_projects_screen(frame, app),
         CurrentScreen::Generating => status::render_generating_screen(frame),
         CurrentScreen::Success(path) => status::render_success_screen(frame, path),

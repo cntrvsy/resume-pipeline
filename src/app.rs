@@ -1,7 +1,7 @@
-use crossterm::event::KeyCode;
-use ratatui::widgets::ListState;
 use crate::models::ResumeData;
 use crate::pdf::generate_pdf;
+use crossterm::event::KeyCode;
+use ratatui::widgets::ListState;
 
 // 1. STATE MANAGEMENT
 #[derive(Debug, PartialEq)]
@@ -11,6 +11,7 @@ pub enum CurrentScreen {
     JobTitleSelection,
     EducationSelection,
     ExperienceSelection,
+    ExperienceBulletSelection,
     ProjectsSelection,
     Generating,
     Success(String), // Contains the output path
@@ -32,6 +33,7 @@ pub struct App {
     // UI STATE for scrolling through lists
     pub education_list_state: ListState,
     pub experience_list_state: ListState,
+    pub experience_bullet_list_state: ListState, // New state for bullet selection
     pub projects_list_state: ListState,
     pub job_title_list_state: ListState,
 }
@@ -48,6 +50,7 @@ impl App {
             data,
             education_list_state: ListState::default(),
             experience_list_state: ListState::default(),
+            experience_bullet_list_state: ListState::default(),
             projects_list_state: ListState::default(),
             job_title_list_state: ListState::default(),
         }
@@ -169,6 +172,63 @@ impl App {
         }
     }
 
+    // Navigation helpers for Experience Bullets
+    pub fn next_experience_bullet(&mut self) {
+        if let Some(job_index) = self.experience_list_state.selected() {
+            if let Some(job) = self.data.experience.get(job_index) {
+                if job.bullets.is_empty() {
+                    return;
+                }
+                let i = match self.experience_bullet_list_state.selected() {
+                    Some(i) => {
+                        if i >= job.bullets.len() - 1 {
+                            0
+                        } else {
+                            i + 1
+                        }
+                    }
+                    None => 0,
+                };
+                self.experience_bullet_list_state.select(Some(i));
+            }
+        }
+    }
+
+    pub fn previous_experience_bullet(&mut self) {
+        if let Some(job_index) = self.experience_list_state.selected() {
+            if let Some(job) = self.data.experience.get(job_index) {
+                if job.bullets.is_empty() {
+                    return;
+                }
+                let i = match self.experience_bullet_list_state.selected() {
+                    Some(i) => {
+                        if i == 0 {
+                            job.bullets.len() - 1
+                        } else {
+                            i - 1
+                        }
+                    }
+                    None => 0,
+                };
+                self.experience_bullet_list_state.select(Some(i));
+            }
+        }
+    }
+
+    pub fn toggle_experience_bullet(&mut self) {
+        if let Some(job_index) = self.experience_list_state.selected() {
+            if let Some(bullet_index) = self.experience_bullet_list_state.selected() {
+                if let Some(job) = self.data.experience.get_mut(job_index) {
+                    if job.hidden_bullets.contains(&bullet_index) {
+                        job.hidden_bullets.retain(|&x| x != bullet_index);
+                    } else {
+                        job.hidden_bullets.push(bullet_index);
+                    }
+                }
+            }
+        }
+    }
+
     // Navigation helpers for Projects
     pub fn next_project(&mut self) {
         if self.data.projects.is_empty() {
@@ -283,12 +343,30 @@ impl App {
                 KeyCode::Char('j') | KeyCode::Down => self.next_experience(),
                 KeyCode::Char('k') | KeyCode::Up => self.previous_experience(),
                 KeyCode::Char(' ') => self.toggle_experience(),
+                KeyCode::Char('e') | KeyCode::Right => {
+                    self.current_screen = CurrentScreen::ExperienceBulletSelection;
+                    self.experience_bullet_list_state.select(Some(0));
+                }
                 KeyCode::Enter => {
                     self.current_screen = CurrentScreen::ProjectsSelection;
                     self.projects_list_state.select(Some(0));
                 }
                 KeyCode::Backspace => {
                     self.current_screen = CurrentScreen::EducationSelection;
+                }
+                _ => {}
+            },
+
+            // ─────────────────────────────────────────────────────────────
+            // Experience Bullets
+            // ─────────────────────────────────────────────────────────────
+            CurrentScreen::ExperienceBulletSelection => match key {
+                KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
+                KeyCode::Char('j') | KeyCode::Down => self.next_experience_bullet(),
+                KeyCode::Char('k') | KeyCode::Up => self.previous_experience_bullet(),
+                KeyCode::Char(' ') => self.toggle_experience_bullet(),
+                KeyCode::Enter | KeyCode::Esc | KeyCode::Left | KeyCode::Backspace => {
+                    self.current_screen = CurrentScreen::ExperienceSelection;
                 }
                 _ => {}
             },

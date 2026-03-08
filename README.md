@@ -142,7 +142,7 @@ resume-pipeline/
 ├── data/                   # YAML data files
 │   ├── profile.yaml
 │   ├── education.yaml
-│   ├── experience.yaml
+│   ├── experience.yaml     #each bullet point can be toggled, so you can add as many as you want.
 │   └── projects.yaml
 ├── .github/templates/      # Typst templates
 │   └── default_resume_template.typ
