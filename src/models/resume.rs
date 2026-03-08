@@ -143,7 +143,17 @@ impl ResumeData {
                 .experience
                 .iter()
                 .filter(|e| e.is_visible)
-                .cloned()
+                .map(|e| {
+                    let mut filtered_e = e.clone();
+                    filtered_e.bullets = e
+                        .bullets
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| !e.hidden_bullets.contains(i))
+                        .map(|(_, b)| b.clone())
+                        .collect();
+                    filtered_e
+                })
                 .collect(),
             projects: self
                 .projects

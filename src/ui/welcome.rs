@@ -6,7 +6,9 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 
-pub fn render_welcome_screen(frame: &mut Frame) {
+use crate::app::App;
+
+pub fn render_welcome_screen(frame: &mut Frame, app: &App) {
     let vertical_layout = Layout::vertical([
         Constraint::Fill(1),
         Constraint::Length(10),
@@ -24,15 +26,22 @@ pub fn render_welcome_screen(frame: &mut Frame) {
 
     let title_block = Block::bordered()
         .border_style(Style::default().fg(Color::Cyan))
-        .title(" CV GEN v1.2.2 ")
+        .title(" CV GEN v1.3.0 ")
         .title_alignment(Alignment::Center);
+
+    let user_name = app
+        .data
+        .profile
+        .as_ref()
+        .map(|p| p.name.clone())
+        .unwrap_or_else(|| "User".to_string());
 
     let welcome_text = vec![
         Line::from(""),
         Line::from(vec![
             Span::raw("Welcome, "),
             Span::styled(
-                "User",
+                user_name,
                 Style::default()
                     .fg(Color::Yellow)
                     .add_modifier(Modifier::BOLD),
