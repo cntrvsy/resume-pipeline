@@ -13,7 +13,7 @@ mod welcome;
 // 5. RENDERING LOGIC
 pub fn render_ui(frame: &mut Frame, app: &mut App) {
     match &app.current_screen {
-        CurrentScreen::Welcome => welcome::render_welcome_screen(frame),
+        CurrentScreen::Welcome => welcome::render_welcome_screen(frame, app),
         CurrentScreen::ProfileView => profile::render_profile_screen(frame, app),
         CurrentScreen::JobTitleSelection => job_titles::render_job_title_screen(frame, app),
         CurrentScreen::EducationSelection => education::render_education_screen(frame, app),
