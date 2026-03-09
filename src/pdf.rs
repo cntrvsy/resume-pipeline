@@ -7,6 +7,30 @@ use typst_pdf::PdfOptions;
 use crate::models::ResumeData;
 use crate::typst_backend::ResumeWorld;
 
+fn get_current_year() -> u64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let now = SystemTime::now();
+    let duration = now.duration_since(UNIX_EPOCH).unwrap_or_default();
+    let days = duration.as_secs() / 86400;
+
+    let mut year = 1970;
+    let mut days_left = days;
+
+    loop {
+        let is_leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+        let days_in_year = if is_leap { 366 } else { 365 };
+
+        if days_left >= days_in_year {
+            days_left -= days_in_year;
+            year += 1;
+        } else {
+            break;
+        }
+    }
+
+    year
+}
+
 // 2. PDF GENERATION
 pub fn generate_pdf(data: &ResumeData) -> Result<String> {
     let output_dir = Path::new("data/output");
@@ -51,7 +75,48 @@ pub fn generate_pdf(data: &ResumeData) -> Result<String> {
     let pdf_data = typst_pdf::pdf(&document, &options)
         .map_err(|e| color_eyre::eyre::eyre!("PDF Export Error: {:?}", e))?;
 
-    let output_path = output_dir.join("resume.pdf");
+    // --- Generate dynamic filename ---
+    let mut filename_parts = Vec::new();
+
+    // 1. First and Last Name
+    let user_name = data
+        .profile
+        .as_ref()
+        .map(|p| p.name.clone())
+        .unwrap_or_default();
+
+    let name_parts: Vec<&str> = user_name.split_whitespace().collect();
+    if !name_parts.is_empty() {
+        let first_name = name_parts[0];
+        let last_name = *name_parts.last().unwrap_or(&"");
+        if first_name == last_name {
+            filename_parts.push(first_name.to_string());
+        } else {
+            filename_parts.push(format!("{} {}", first_name, last_name));
+        }
+    }
+
+    // 2. Job Title
+    if let Some(ref title) = data.job_title {
+        let trimmed_title = title.trim();
+        if !trimmed_title.is_empty() && trimmed_title != "N/A" {
+            filename_parts.push(trimmed_title.to_string());
+        }
+    }
+
+    // 3. Current Year
+    let current_year = get_current_year();
+    filename_parts.push(current_year.to_string());
+
+    let mut base_filename = filename_parts.join(" ");
+
+    // Fallback if empty or something went wrong (only contains year)
+    if base_filename.trim().is_empty() || filename_parts.len() == 1 {
+        base_filename = "resume".to_string();
+    }
+
+    let filename = format!("{}.pdf", base_filename);
+    let output_path = output_dir.join(&filename);
     fs::write(&output_path, pdf_data)?;
 
     Ok(output_path.to_string_lossy().to_string())
