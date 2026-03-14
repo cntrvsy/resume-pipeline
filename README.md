@@ -131,7 +131,7 @@ Your generated resume will be saved to `output/resume.pdf`
 
 ## Customizing the Template
 
-The Typst template is located at `.github/templates/default_resume_template.typ`. You can modify this file to change the appearance and layout of your resume.
+The Typst template is located at `data/templates/default_resume_template.typ`. You can modify this file to change the appearance and layout of your resume.
 
 The template receives your filtered data directly from Rust via Typst's `sys.inputs` mechanism - no JSON files needed! The data is passed in-memory using the `compile_with_input()` function.
 
@@ -143,9 +143,9 @@ resume-pipeline/
 │   ├── profile.yaml
 │   ├── education.yaml
 │   ├── experience.yaml     #each bullet point can be toggled, so you can add as many as you want.
-│   └── projects.yaml
-├── .github/templates/      # Typst templates
-│   └── default_resume_template.typ
+│   ├── projects.yaml
+│   └── templates/          # Typst templates
+│       └── default_resume_template.typ
 ├── src/
 │   ├── main.rs            # TUI application logic
 │   └── models.rs          # Data structures and YAML parsing
