@@ -9,6 +9,7 @@ pub enum CurrentScreen {
     Welcome,
     ProfileView,
     JobTitleSelection,
+    ProfessionalSummarySelection,
     EducationSelection,
     ExperienceSelection,
     ExperienceBulletSelection,
@@ -36,6 +37,7 @@ pub struct App {
     pub experience_bullet_list_state: ListState, // New state for bullet selection
     pub projects_list_state: ListState,
     pub job_title_list_state: ListState,
+    pub professional_summary_list_state: ListState,
 }
 
 impl App {
@@ -53,6 +55,7 @@ impl App {
             experience_bullet_list_state: ListState::default(),
             projects_list_state: ListState::default(),
             job_title_list_state: ListState::default(),
+            professional_summary_list_state: ListState::default(),
         }
     }
 
@@ -127,6 +130,36 @@ impl App {
         };
 
         self.job_title_list_state.select(Some(i));
+    }
+
+    // Navigation helpers for Professional Summary
+
+    pub fn next_professional_summary(&mut self) {
+        let len = self.data.professional_summaries.len();
+        if len == 0 {
+            return;
+        }
+
+        let i = match self.professional_summary_list_state.selected() {
+            Some(i) if i + 1 < len => i + 1,
+            _ => 0,
+        };
+
+        self.professional_summary_list_state.select(Some(i));
+    }
+
+    pub fn previous_professional_summary(&mut self) {
+        let len = self.data.professional_summaries.len();
+        if len == 0 {
+            return;
+        }
+
+        let i = match self.professional_summary_list_state.selected() {
+            Some(0) | None => len - 1,
+            Some(i) => i - 1,
+        };
+
+        self.professional_summary_list_state.select(Some(i));
     }
 
     // Navigation helpers for Experience
@@ -314,6 +347,29 @@ impl App {
             CurrentScreen::ProfileView => match key {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Enter => {
+                    if self.data.professional_summaries.is_empty() {
+                        self.current_screen = CurrentScreen::EducationSelection;
+                        self.education_list_state.select(Some(0));
+                    } else {
+                        self.current_screen = CurrentScreen::ProfessionalSummarySelection;
+                        self.professional_summary_list_state.select(Some(0));
+                    }
+                }
+                _ => {}
+            },
+
+            // ─────────────────────────────────────────────────────────────
+            // Professional Summary
+            // ─────────────────────────────────────────────────────────────
+            CurrentScreen::ProfessionalSummarySelection => match key {
+                KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
+                KeyCode::Char('j') | KeyCode::Down => self.next_professional_summary(),
+                KeyCode::Char('k') | KeyCode::Up => self.previous_professional_summary(),
+                KeyCode::Enter => {
+                    if let Some(i) = self.professional_summary_list_state.selected() {
+                        self.data.professional_summary =
+                            Some(self.data.professional_summaries[i].summary.clone());
+                    }
                     self.current_screen = CurrentScreen::EducationSelection;
                     self.education_list_state.select(Some(0));
                 }

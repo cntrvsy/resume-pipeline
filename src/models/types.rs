@@ -25,6 +25,11 @@ pub struct JobTitle {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProfessionalSummary {
+    pub summary: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Education {
     pub school: String,
     pub degree: String,
@@ -71,6 +76,7 @@ pub struct FilteredResumeData {
     pub experience: Vec<Experience>,
     pub projects: Vec<Project>,
     pub job_title: String,
+    pub professional_summary: String,
 }
 
 // Wrapper for education YAML parsing
@@ -143,6 +149,18 @@ impl From<FilteredResumeData> for Dict {
         dict.insert("experience".into(), val.experience.into_value());
         dict.insert("projects".into(), val.projects.into_value());
         dict.insert("job_title".into(), val.job_title.into_value());
+        dict.insert(
+            "professional_summary".into(),
+            val.professional_summary.into_value(),
+        );
         dict
+    }
+}
+
+impl IntoValue for ProfessionalSummary {
+    fn into_value(self) -> Value {
+        let mut dict = Dict::new();
+        dict.insert("summary".into(), self.summary.into_value());
+        Value::Dict(dict)
     }
 }

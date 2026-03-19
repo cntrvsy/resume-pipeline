@@ -13,6 +13,7 @@
     citizenship: "US Citizen"
   ),
   job_title: "Full Stack Software Engineer",
+  professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions.",
   education: (
     (school: "University of Tech", degree: "B.Sc. Computer Science", status: "Graduated May 2019"),
   ),
@@ -97,6 +98,15 @@
   ]
 }
 
+#let summary_component(summary) = {
+  if summary != "" and summary != "N/A" {
+    align(left)[
+      #text(style: "normal", size: 10pt)[#summary]
+      #v(8pt)
+    ]
+  }
+}
+
 #let section_title(title) = {
   v(10pt)
   block(width: 100%, stroke: (bottom: 0.5pt + gray))[
@@ -147,6 +157,8 @@
 #header_component(resume_data.profile)
 
 #job_title_component(resume_data.at("job_title", default: "Software Engineer"))
+
+#summary_component(resume_data.at("professional_summary", default: ""))
 
 #section_title("Education")
 #for edu in resume_data.education [
