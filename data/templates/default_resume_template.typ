@@ -13,6 +13,7 @@
     citizenship: "US Citizen"
   ),
   job_title: "Full Stack Software Engineer",
+  professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions.",
   education: (
     (school: "University of Tech", degree: "B.Sc. Computer Science", status: "Graduated May 2019"),
   ),
@@ -82,7 +83,13 @@
     #text(size: 16pt, weight: "bold")[#profile.name]
     #v(4pt)
     #text(size: 10pt)[
-      #profile.phone | #link("mailto:" + profile.email)[#profile.email] | #link("https://" + profile.url)[Linked In] | #link("https://" + profile.website)[#profile.website] \
+      #let contact_items = (
+        if profile.phone != "" { profile.phone },
+        if profile.email != "" { link("mailto:" + profile.email)[#profile.email] },
+        if profile.url != "" { link("https://" + profile.url)[Linked In] },
+        if profile.website != "" { link("https://" + profile.website)[#profile.website] },
+      ).filter(it => it != none)
+      #contact_items.join(" | ") \
       #profile.citizenship #sym.bullet #profile.location
     ]
   ]
@@ -95,6 +102,15 @@
     #text(size: 11pt, weight: "bold", fill: black)[#title] // Removed .upper()
     #v(8pt)
   ]
+}
+
+#let summary_component(summary) = {
+  if summary != "" and summary != "N/A" {
+    align(left)[
+      #text(style: "normal", size: 10pt)[#summary]
+      #v(8pt)
+    ]
+  }
 }
 
 #let section_title(title) = {
@@ -147,6 +163,8 @@
 #header_component(resume_data.profile)
 
 #job_title_component(resume_data.at("job_title", default: "Software Engineer"))
+
+#summary_component(resume_data.at("professional_summary", default: ""))
 
 #section_title("Education")
 #for edu in resume_data.education [

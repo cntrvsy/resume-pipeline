@@ -28,12 +28,12 @@ pub fn render_profile_screen(frame: &mut Frame, app: &App) {
                 Span::raw(&profile.name),
             ]),
             Line::from(vec![
-                Span::styled("Email: ", Style::default().fg(Color::Cyan)),
-                Span::raw(&profile.email),
+                Span::styled(if profile.show_email { "[x] Email: " } else { "[ ] Email: " }, Style::default().fg(if profile.show_email { Color::Cyan } else { Color::DarkGray })),
+                Span::styled(&profile.email, Style::default().fg(if profile.show_email { Color::Reset } else { Color::DarkGray })),
             ]),
             Line::from(vec![
-                Span::styled("Phone: ", Style::default().fg(Color::Cyan)),
-                Span::raw(&profile.phone),
+                Span::styled(if profile.show_phone { "[x] Phone: " } else { "[ ] Phone: " }, Style::default().fg(if profile.show_phone { Color::Cyan } else { Color::DarkGray })),
+                Span::styled(&profile.phone, Style::default().fg(if profile.show_phone { Color::Reset } else { Color::DarkGray })),
             ]),
             Line::from(vec![
                 Span::styled("URL: ", Style::default().fg(Color::Cyan)),
@@ -65,11 +65,13 @@ pub fn render_profile_screen(frame: &mut Frame, app: &App) {
     frame.render_widget(content, chunks[1]);
 
     let footer = Paragraph::new(Line::from(vec![
+        Span::styled(" <e/p> ", Style::default().bg(Color::Blue).fg(Color::Black)),
+        Span::raw(" Toggle Email/Phone  "),
         Span::styled(
             " <Enter> ",
             Style::default().bg(Color::Green).fg(Color::Black),
         ),
-        Span::raw(" Continue    "),
+        Span::raw(" Continue  "),
         Span::styled(" <q> ", Style::default().bg(Color::Red).fg(Color::Black)),
         Span::raw(" Quit "),
     ]))

@@ -15,6 +15,8 @@ pub struct ResumeData {
     pub projects: Vec<Project>,
     pub job_title: Option<String>,
     pub job_titles: Vec<JobTitle>,
+    pub professional_summary: Option<String>,
+    pub professional_summaries: Vec<super::types::ProfessionalSummary>,
 }
 
 impl ResumeData {
@@ -66,6 +68,22 @@ impl ResumeData {
                 }
             }
             Err(e) => eprintln!("Warning: Could not load jobtitles.yaml: {}", e),
+        }
+
+        // Load Professional Summaries
+        match read_yaml("professional_summary.yaml") {
+            Ok(summaries_str) => {
+                if !summaries_str.is_empty() {
+                    data.professional_summaries =
+                        serde_yaml::from_str(&summaries_str).map_err(|e| {
+                            color_eyre::eyre::eyre!(
+                                "YAML Parsing Error in professional_summary.yaml: {}",
+                                e
+                            )
+                        })?;
+                }
+            }
+            Err(e) => eprintln!("Warning: Could not load professional_summary.yaml:{}", e),
         }
 
         // Load Education
@@ -124,15 +142,26 @@ impl ResumeData {
     /// Create a filtered dataset with only visible items
     pub fn to_filtered_data(&self) -> FilteredResumeData {
         FilteredResumeData {
-            profile: self.profile.clone().unwrap_or_else(|| Profile {
-                name: "Unknown".to_string(),
-                email: "unknown@example.com".to_string(),
-                phone: "N/A".to_string(),
-                url: "N/A".to_string(),
-                website: "N/A".to_string(),
-                location: "N/A".to_string(),
-                citizenship: "N/A".to_string(),
-            }),
+            profile: {
+                let mut p = self.profile.clone().unwrap_or_else(|| Profile {
+                    name: "Unknown".to_string(),
+                    email: "unknown@example.com".to_string(),
+                    phone: "N/A".to_string(),
+                    url: "N/A".to_string(),
+                    website: "N/A".to_string(),
+                    location: "N/A".to_string(),
+                    citizenship: "N/A".to_string(),
+                    show_email: true,
+                    show_phone: true,
+                });
+                if !p.show_email {
+                    p.email.clear();
+                }
+                if !p.show_phone {
+                    p.phone.clear();
+                }
+                p
+            },
             education: self
                 .education
                 .iter()
@@ -162,6 +191,10 @@ impl ResumeData {
                 .cloned()
                 .collect(),
             job_title: self.job_title.clone().unwrap_or_else(|| " N/A".to_string()),
+            professional_summary: self
+                .professional_summary
+                .clone()
+                .unwrap_or_else(|| "N/A".to_string()),
         }
     }
 }

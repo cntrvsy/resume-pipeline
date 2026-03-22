@@ -7,6 +7,7 @@ use typst_pdf::PdfOptions;
 use crate::models::ResumeData;
 use crate::typst_backend::ResumeWorld;
 
+// function to get the current year from the system to be used in the output file name
 fn get_current_year() -> u64 {
     use std::time::{SystemTime, UNIX_EPOCH};
     let now = SystemTime::now();
@@ -31,7 +32,7 @@ fn get_current_year() -> u64 {
     year
 }
 
-// 2. PDF GENERATION
+// PDF GENERATION
 pub fn generate_pdf(data: &ResumeData) -> Result<String> {
     let output_dir = Path::new("data/output");
     if !output_dir.exists() {
