@@ -42,6 +42,9 @@ src/
 - **Straightforward Interface**: Literally just click enter.
 - **Multi-section selection**: Choose from your profile, education, experience, and projects.
 - **Live selection**: Toggle which items to include in your final resume using checkboxes.
+- **Granular Experience Tuning**: Drill down into job experiences to explicitly toggle specific bullet points on or off.
+- **Modular Data Omission**: Selectively omit your email or phone number directly from the UI.
+- **Dynamic Profiles**: Maintain multiple job titles and professional summaries, selecting the best fit for the target role.
 - **PDF export**: Automatically generates a professional PDF using Typst templates
 - **YAML-based data**: Easy to maintain and version control your resume data
 
@@ -110,11 +113,13 @@ cargo run --release
 ### 3. Navigate the Interface
 
 1. **Welcome Screen**: Press `Enter` to start
-2. **Profile View**: Review your personal information, press `Enter` to continue
-3. **Education Selection**: Use `j`/`k` or arrow keys to navigate, `Space` to toggle selection
-4. **Experience Selection**: Same navigation, select relevant work experience
-5. **Projects Selection**: Choose projects to include in your resume
-6. **Generate**: Press `Enter` on the final screen to generate your PDF
+2. **Job Title Selection**: Select a target job title using `j`/`k`.
+3. **Profile View**: Review your personal information. Toggle Email (`e`) and Phone Number (`p`) visibility, press `Enter` to continue
+4. **Professional Summary**: Choose the summary that best fits the specific role, press `Enter`
+5. **Education Selection**: Use `j`/`k` or arrow keys to navigate, `Space` to toggle selection
+6. **Experience Selection**: Use `Space` to toggle entire roles. Press `e` or `Right Arrow` to drill down and toggle individual bullet points.
+7. **Projects Selection**: Choose projects to include in your resume
+8. **Generate**: Press `Enter` on the final screen to generate your PDF
 
 ### 4. Find Your Resume
 
@@ -127,6 +132,8 @@ Your generated resume will be saved to `output/resume.pdf`
 - `j` / `Down Arrow` - Move selection down
 - `k` / `Up Arrow` - Move selection up
 - `Space` - Toggle item inclusion
+- `e` / `p` - Toggle Email/Phone (Profile screen)
+- `e` / `Right Arrow` - Drill down into experience bullets (Experience screen)
 - `q` - Quit application
 
 ## Customizing the Template
