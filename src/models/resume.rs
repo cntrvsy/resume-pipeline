@@ -142,15 +142,26 @@ impl ResumeData {
     /// Create a filtered dataset with only visible items
     pub fn to_filtered_data(&self) -> FilteredResumeData {
         FilteredResumeData {
-            profile: self.profile.clone().unwrap_or_else(|| Profile {
-                name: "Unknown".to_string(),
-                email: "unknown@example.com".to_string(),
-                phone: "N/A".to_string(),
-                url: "N/A".to_string(),
-                website: "N/A".to_string(),
-                location: "N/A".to_string(),
-                citizenship: "N/A".to_string(),
-            }),
+            profile: {
+                let mut p = self.profile.clone().unwrap_or_else(|| Profile {
+                    name: "Unknown".to_string(),
+                    email: "unknown@example.com".to_string(),
+                    phone: "N/A".to_string(),
+                    url: "N/A".to_string(),
+                    website: "N/A".to_string(),
+                    location: "N/A".to_string(),
+                    citizenship: "N/A".to_string(),
+                    show_email: true,
+                    show_phone: true,
+                });
+                if !p.show_email {
+                    p.email.clear();
+                }
+                if !p.show_phone {
+                    p.phone.clear();
+                }
+                p
+            },
             education: self
                 .education
                 .iter()

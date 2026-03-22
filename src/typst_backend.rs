@@ -33,7 +33,7 @@ fn get_fonts() -> &'static (FontBook, Vec<Font>) {
     })
 }
 
-// 2. THE WORLD STRUCT
+// 2. THE WORLD STRUCT - this is necessary as the typst library is pure so
 pub struct ResumeWorld {
     library: LazyHash<Library>,
     book: LazyHash<FontBook>, // Wrapped in LazyHash for 0.12 compatibility
@@ -83,6 +83,7 @@ impl World for ResumeWorld {
         }
     }
 
+    // if we wanted to load custom files directly instead of embedding
     fn file(&self, id: FileId) -> FileResult<Bytes> {
         Err(FileError::NotFound(id.vpath().as_rooted_path().into()))
     }
@@ -91,6 +92,7 @@ impl World for ResumeWorld {
         self.fonts.get(index).cloned()
     }
 
+    // excessive but if you wanted to adapt this into a github action important to have
     fn today(&self, _offset: Option<i64>) -> Option<Datetime> {
         let date = self.current_time.date();
         // FIX: Datetime::from_ymd returns Option<Datetime>, no need to wrap in Some() again

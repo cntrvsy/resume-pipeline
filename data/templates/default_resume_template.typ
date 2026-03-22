@@ -83,7 +83,13 @@
     #text(size: 16pt, weight: "bold")[#profile.name]
     #v(4pt)
     #text(size: 10pt)[
-      #profile.phone | #link("mailto:" + profile.email)[#profile.email] | #link("https://" + profile.url)[Linked In] | #link("https://" + profile.website)[#profile.website] \
+      #let contact_items = (
+        if profile.phone != "" { profile.phone },
+        if profile.email != "" { link("mailto:" + profile.email)[#profile.email] },
+        if profile.url != "" { link("https://" + profile.url)[Linked In] },
+        if profile.website != "" { link("https://" + profile.website)[#profile.website] },
+      ).filter(it => it != none)
+      #contact_items.join(" | ") \
       #profile.citizenship #sym.bullet #profile.location
     ]
   ]

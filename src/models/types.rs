@@ -17,6 +17,12 @@ pub struct Profile {
     pub website: String,
     pub location: String,
     pub citizenship: String,
+
+    // UI STATE
+    #[serde(skip, default = "default_true")]
+    pub show_email: bool,
+    #[serde(skip, default = "default_true")]
+    pub show_phone: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

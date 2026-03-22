@@ -331,6 +331,7 @@ impl App {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Char('j') | KeyCode::Down => self.next_job_title(),
                 KeyCode::Char('k') | KeyCode::Up => self.previous_job_title(),
+                KeyCode::Backspace => self.current_screen = CurrentScreen::Welcome,
                 KeyCode::Enter => {
                     if let Some(i) = self.job_title_list_state.selected() {
                         self.data.job_title = Some(self.data.job_titles[i].title.clone());
@@ -346,6 +347,16 @@ impl App {
             // ─────────────────────────────────────────────────────────────
             CurrentScreen::ProfileView => match key {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
+                KeyCode::Char('e') => {
+                    if let Some(profile) = &mut self.data.profile {
+                        profile.show_email = !profile.show_email;
+                    }
+                }
+                KeyCode::Char('p') => {
+                    if let Some(profile) = &mut self.data.profile {
+                        profile.show_phone = !profile.show_phone;
+                    }
+                }
                 KeyCode::Enter => {
                     if self.data.professional_summaries.is_empty() {
                         self.current_screen = CurrentScreen::EducationSelection;
@@ -353,6 +364,13 @@ impl App {
                     } else {
                         self.current_screen = CurrentScreen::ProfessionalSummarySelection;
                         self.professional_summary_list_state.select(Some(0));
+                    }
+                }
+                KeyCode::Backspace => {
+                    if self.data.job_titles.is_empty() {
+                        self.current_screen = CurrentScreen::Welcome;
+                    } else {
+                        self.current_screen = CurrentScreen::JobTitleSelection;
                     }
                 }
                 _ => {}
@@ -365,6 +383,7 @@ impl App {
                 KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
                 KeyCode::Char('j') | KeyCode::Down => self.next_professional_summary(),
                 KeyCode::Char('k') | KeyCode::Up => self.previous_professional_summary(),
+                KeyCode::Backspace => self.current_screen = CurrentScreen::ProfileView,
                 KeyCode::Enter => {
                     if let Some(i) = self.professional_summary_list_state.selected() {
                         self.data.professional_summary =
@@ -384,6 +403,13 @@ impl App {
                 KeyCode::Char('j') | KeyCode::Down => self.next_education(),
                 KeyCode::Char('k') | KeyCode::Up => self.previous_education(),
                 KeyCode::Char(' ') => self.toggle_education(),
+                KeyCode::Backspace => {
+                    if self.data.professional_summaries.is_empty() {
+                        self.current_screen = CurrentScreen::ProfileView;
+                    } else {
+                        self.current_screen = CurrentScreen::ProfessionalSummarySelection;
+                    }
+                }
                 KeyCode::Enter => {
                     self.current_screen = CurrentScreen::ExperienceSelection;
                     self.experience_list_state.select(Some(0));
