@@ -57,8 +57,26 @@ pub fn render_job_title_screen(frame: &mut Frame, app: &mut App) {
         )
         .highlight_symbol(">> ");
 
-    frame.render_stateful_widget(list, chunks[1], &mut app.job_title_list_state);
+    let content_chunks = Layout::horizontal([
+        Constraint::Percentage(30),
+        Constraint::Percentage(70),
+    ])
+    .split(chunks[1]);
 
+    frame.render_stateful_widget(list, content_chunks[0], &mut app.job_title_list_state);
+
+    let selected_idx = app.job_title_list_state.selected().unwrap_or(0);
+    let summary_text = if let Some(job) = app.data.job_titles.get(selected_idx) {
+        job.professional_summary.as_str()
+    } else {
+        "No summary available."
+    };
+
+    let summary_paragraph = Paragraph::new(summary_text)
+        .block(Block::bordered().title(" Summary Preview "))
+        .wrap(ratatui::widgets::Wrap { trim: true });
+
+    frame.render_widget(summary_paragraph, content_chunks[1]);
     // Footer
     let footer = Paragraph::new(Line::from(vec![
         Span::styled(

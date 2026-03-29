@@ -16,7 +16,6 @@ pub struct ResumeData {
     pub job_title: Option<String>,
     pub job_titles: Vec<JobTitle>,
     pub professional_summary: Option<String>,
-    pub professional_summaries: Vec<super::types::ProfessionalSummary>,
 }
 
 impl ResumeData {
@@ -70,21 +69,7 @@ impl ResumeData {
             Err(e) => eprintln!("Warning: Could not load jobtitles.yaml: {}", e),
         }
 
-        // Load Professional Summaries
-        match read_yaml("professional_summary.yaml") {
-            Ok(summaries_str) => {
-                if !summaries_str.is_empty() {
-                    data.professional_summaries =
-                        serde_yaml::from_str(&summaries_str).map_err(|e| {
-                            color_eyre::eyre::eyre!(
-                                "YAML Parsing Error in professional_summary.yaml: {}",
-                                e
-                            )
-                        })?;
-                }
-            }
-            Err(e) => eprintln!("Warning: Could not load professional_summary.yaml:{}", e),
-        }
+
 
         // Load Education
         match read_yaml("education.yaml") {

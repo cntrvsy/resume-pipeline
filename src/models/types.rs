@@ -28,12 +28,9 @@ pub struct Profile {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JobTitle {
     pub title: String,
+    pub professional_summary: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProfessionalSummary {
-    pub summary: String,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Education {
@@ -163,10 +160,4 @@ impl From<FilteredResumeData> for Dict {
     }
 }
 
-impl IntoValue for ProfessionalSummary {
-    fn into_value(self) -> Value {
-        let mut dict = Dict::new();
-        dict.insert("summary".into(), self.summary.into_value());
-        Value::Dict(dict)
-    }
-}
+

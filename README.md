@@ -47,7 +47,7 @@ src/
 - **Live selection**: Toggle which items to include in your final resume using checkboxes.
 - **Granular Experience Tuning**: Drill down into job experiences to explicitly toggle specific bullet points on or off.
 - **Modular Data Omission**: Selectively omit your email or phone number directly from the UI.
-- **Dynamic Profiles**: Maintain multiple job titles and professional summaries, selecting the best fit for the target role.
+- **Dynamic Profiles**: Maintain multiple job titles with accompanying professional summaries, selecting the best fit for the target role in one step.
 - **PDF export**: Automatically generates a professional PDF using Typst templates
 - **YAML-based data**: Easy to maintain and version control your resume data
 
@@ -103,7 +103,7 @@ Inside the `data/` directory you'll find:
 - `education.yaml` - Educational background
 - `experience.yaml` - Work experience
 - `projects.yaml` - Side projects and portfolio
-- `jobtitles.yaml` - Job titles
+- `jobtitles.yaml` - Job titles and accompanying professional summaries
 
 - `output/resume.pdf` - Your generated resume
 - `templates/default_resume_template.typ` - You are also free to copy paste this template into the [typst app](https://typst.app) it works by itself plus the online editor is really amazing.
@@ -121,13 +121,12 @@ cargo run --release
 ### 3. Navigate the Interface
 
 1. **Welcome Screen**: Press `Enter` to start
-2. **Job Title Selection**: Select a target job title using `j`/`k`.
-3. **Profile View**: Review your personal information. Toggle Email (`e`) and Phone Number (`p`) visibility, press `Enter` to continue
-4. **Professional Summary**: Choose the summary that best fits the specific role, press `Enter`
-5. **Education Selection**: Use `j`/`k` or arrow keys to navigate, `Space` to toggle selection
-6. **Experience Selection**: Use `Space` to toggle entire roles. Press `e` or `Right Arrow` to drill down and toggle individual bullet points.
-7. **Projects Selection**: Choose projects to include in your resume
-8. **Generate**: Press `Enter` on the final screen to generate your PDF
+2. **Job Title Selection**: Select a target job title using `j`/`k`. The accompanying professional summary is automatically selected and shown in the preview panel.
+3. **Profile View**: Review your personal information. Toggle Email (`e`) and Phone Number (`p`) visibility, press `Enter` to continue.
+4. **Education Selection**: Use `j`/`k` or arrow keys to navigate, `Space` to toggle selection.
+5. **Experience Selection**: Use `Space` to toggle entire roles. Press `e` or `Right Arrow` to drill down and toggle individual bullet points.
+6. **Projects Selection**: Choose projects to include in your resume.
+7. **Generate**: Press `Enter` on the final screen to generate your PDF.
 
 ### 4. Find Your Resume
 
@@ -158,6 +157,7 @@ resume-pipeline/
 │   ├── profile.yaml
 │   ├── education.yaml
 │   ├── experience.yaml     #each bullet point can be toggled, so you can add as many as you want.
+│   ├── jobtitles.yaml      #each job title has an accompanying professional summary.
 │   ├── projects.yaml
 │   └── templates/          # Typst templates
 │       └── default_resume_template.typ
