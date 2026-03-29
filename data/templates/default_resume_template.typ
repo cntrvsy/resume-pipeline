@@ -12,8 +12,8 @@
     location: "San Francisco, CA",
     citizenship: "US Citizen"
   ),
-  job_title: "Full Stack Software Engineer",
-  professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions.",
+  job_title: "Fullstack Engineer",
+  professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions using Rust, Go, and React. Strong focus on performance optimization and system architecture.",
   education: (
     (school: "University of Tech", degree: "B.Sc. Computer Science", status: "Graduated May 2019"),
   ),

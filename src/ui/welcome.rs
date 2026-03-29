@@ -26,7 +26,7 @@ pub fn render_welcome_screen(frame: &mut Frame, app: &App) {
 
     let title_block = Block::bordered()
         .border_style(Style::default().fg(Color::Cyan))
-        .title(" CV GEN v1.4.0 ")
+        .title(" CV GEN v1.4.1 ")
         .title_alignment(Alignment::Center);
 
     let user_name = app

@@ -48,7 +48,9 @@ fn test_welcome_to_job_title_transition() {
     // Add a dummy job title so we transition to JobTitleSelection
     app.data.job_titles.push(crate::models::types::JobTitle {
         title: "Developer".to_string(),
+        professional_summary: "Developer summary".to_string(),
     });
+    app.job_title_list_state.select(Some(0));
 
     assert_eq!(app.current_screen, CurrentScreen::Welcome);
 
@@ -57,4 +59,6 @@ fn test_welcome_to_job_title_transition() {
 
     app.handle_key_event(KeyCode::Enter);
     assert_eq!(app.current_screen, CurrentScreen::ProfileView);
+    assert_eq!(app.data.job_title, Some("Developer".to_string()));
+    assert_eq!(app.data.professional_summary, Some("Developer summary".to_string()));
 }

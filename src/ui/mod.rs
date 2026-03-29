@@ -6,7 +6,6 @@ mod education;
 mod experience;
 mod experience_bullets;
 mod job_titles;
-mod professional_summary;
 mod profile;
 mod projects;
 mod status;
@@ -19,9 +18,6 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
         CurrentScreen::ProfileView => profile::render_profile_screen(frame, app),
         CurrentScreen::JobTitleSelection => job_titles::render_job_title_screen(frame, app),
         CurrentScreen::EducationSelection => education::render_education_screen(frame, app),
-        CurrentScreen::ProfessionalSummarySelection => {
-            professional_summary::render_professional_summary_screen(frame, app)
-        }
         CurrentScreen::ExperienceSelection => experience::render_experience_screen(frame, app),
         CurrentScreen::ExperienceBulletSelection => {
             experience_bullets::render_experience_bullet_screen(frame, app)
