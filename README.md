@@ -223,7 +223,7 @@ I'm not currently accepting Pull Requests for this project. However, you are mor
 
 ## License
 
-Copyright (c) cntrvsy <benintangana@gmail.com>
+Copyright (c) 2026 frstudios.co.ke
 
 This project is licensed under the MIT license ([LICENSE] or <http://opensource.org/licenses/MIT>)
 
