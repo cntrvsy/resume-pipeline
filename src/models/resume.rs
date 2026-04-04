@@ -30,7 +30,7 @@ impl ResumeData {
 
         // Helper to read a file
         let read_yaml = |filename: &str| -> Result<String> {
-            // FIX: Use current_dir() to find the folder relative to where the user runs the app
+            // Use current_dir() to find the folder relative to where the user runs the app
             // instead of baking in the build-server path.
             let current_dir = std::env::current_dir()?;
             let path = current_dir.join("data").join(filename);
@@ -68,8 +68,6 @@ impl ResumeData {
             }
             Err(e) => eprintln!("Warning: Could not load jobtitles.yaml: {}", e),
         }
-
-
 
         // Load Education
         match read_yaml("education.yaml") {
