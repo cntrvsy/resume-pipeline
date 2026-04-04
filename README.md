@@ -1,5 +1,7 @@
 # Resume Pipeline
 
+![PR: not welcome](https://img.shields.io/badge/PR:-not_welcome-red?logo=github) ![fork: welcome](https://img.shields.io/badge/fork:-welcome-brightgreen?logo=github)
+
 A Terminal User Interface (TUI) application built with Ratatui that generates custom **OPINIONATED** resumes from YAML data sources and exports them as PDFs using Typst.
 
 ![resume_pipeline_vid](https://github.com/user-attachments/assets/7cc5fd6d-a41c-4e28-9174-e3769559cfd8)
@@ -217,7 +219,7 @@ Make sure your terminal supports the key bindings:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests but rather be sure to FORK the repo and trully make it your own.
+I'm not currently accepting Pull Requests for this project. However, you are more than welcome to fork the repository and customize it to your heart's content!
 
 ## License
 

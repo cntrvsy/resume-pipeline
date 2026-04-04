@@ -46,12 +46,12 @@ impl ResumeWorld {
     pub fn new(template_source: String, inputs: Dict) -> Self {
         let (book, fonts) = get_fonts();
 
-        // FIX: Use builder pattern to inject inputs (typst 0.12+)
+        // Using builder pattern to inject inputs (typst 0.12+)
         let library = Library::builder().with_inputs(inputs).build();
 
         Self {
             library: LazyHash::new(library),
-            // FIX: Clone the book from static and wrap in LazyHash
+            // Clone the book from static and wrap in LazyHash
             book: LazyHash::new(book.clone()),
             fonts,
             source: Source::detached(template_source),
@@ -66,7 +66,7 @@ impl World for ResumeWorld {
         &self.library
     }
 
-    // FIX: Return type must match &LazyHash<FontBook>
+    // Return type must match &LazyHash<FontBook>
     fn book(&self) -> &LazyHash<FontBook> {
         &self.book
     }
@@ -95,7 +95,7 @@ impl World for ResumeWorld {
     // excessive but if you wanted to adapt this into a github action important to have
     fn today(&self, _offset: Option<i64>) -> Option<Datetime> {
         let date = self.current_time.date();
-        // FIX: Datetime::from_ymd returns Option<Datetime>, no need to wrap in Some() again
+        // Datetime::from_ymd returns Option<Datetime>, no need to wrap in Some() again
         Datetime::from_ymd(date.year(), date.month() as u8, date.day())
     }
 }

@@ -67,11 +67,9 @@ pub fn generate_pdf(data: &ResumeData) -> Result<String> {
         .output
         .map_err(|err| color_eyre::eyre::eyre!("Typst Compile Errors: {:?}", err))?;
 
-    // FIX: Updated to match typst-pdf 0.12 signature
     // It takes 2 arguments: the document and the options.
     let options = PdfOptions::default();
 
-    // FIX: Handle the Result returned by pdf().
     // The ? operator unwraps the Ok(Vec<u8>) or returns the Err.
     let pdf_data = typst_pdf::pdf(&document, &options)
         .map_err(|e| color_eyre::eyre::eyre!("PDF Export Error: {:?}", e))?;
