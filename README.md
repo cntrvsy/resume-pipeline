@@ -2,229 +2,71 @@
 
 ![PR: not welcome](https://img.shields.io/badge/PR:-not_welcome-red?logo=github) ![fork: welcome](https://img.shields.io/badge/fork:-welcome-brightgreen?logo=github)
 
-A Terminal User Interface (TUI) application built with Ratatui that generates custom **OPINIONATED** resumes from YAML data sources and exports them as PDFs using Typst.
+A Terminal User Interface (TUI) application built with **Ratatui** for generating tailored resumes from YAML data sources. Exports professional PDFs using **Typst**.
 
 ![resume_pipeline_vid](https://github.com/user-attachments/assets/7cc5fd6d-a41c-4e28-9174-e3769559cfd8)
 
-Sadly im not accepting contributions to this repo but feel free to fork it 🙂.
+## 🚀 Quick Start
 
-## Why (personal reason)
+### Installation
+1. Download the latest binary and `resume-data.zip` from [Releases](https://github.com/cntrvsy/resume-pipeline/releases).
+2. Unzip `resume-data.zip` into the same directory as the executable.
+3. Run the executable:
+   ```bash
+   ./resume-pipeline
+   ```
 
-- It was depressing spending 40 minutes on a resume and a cover letter to not even get a rejection email and creating AI slop resumes/cover letters in under 20 minutes wasn't getting me anywhere either. now i can spend 5 minutes on a resume and a cover letter and get a rejection email.
-- i was inspired by this video [CV Pipeline as Code: LaTeX, YAML, and GitHub Actions](https://www.youtube.com/watch?v=S2gpOr-mbf4) and i wanted to give back to the community with my own spin.
-
-## Why (bigger picture)
-
-- As someone who has studied Applied Computing Technology with a focus on Software Development, most hiring managers expect a more tailored and personalized resume to the **LISTED** job title or job description. so my varied **EXPERIENCE** wasnt hitting the mark as they are looking for someone they can onboard with little friction meaning i needed to settle on a **TECH STACK**. It's no longer just "front-end engineer" or "back-end engineer" but a "product implementation engineer" (yes, this was an actual job title and role involved basically creating UIs in Svelte and basic CRUD backend with type safety, yeah...). This ultimately meant that i needed multiple resumes for different job titles and different tech stacks.
-- The job market is competitive, AI is great but that means it's harder to stand out and with most job recruiters i have followed on social media( the ones who arent trying to sell me something) have expressed their frustration with candidate fraud both at large and small scale.
-- Also, doing my research each job title has different expectations some like when you include statistics others don't, all agree you shouldnt have SKILLS section and they want to see how you used those skills(keyword + How it was used + the Result of using it and/or the Reason it was used). agree, disagree, i dont care because if you havent noticed this all depends on the Recruiter "influencer" you follow, some resume styles are just difficult to make work and harder to filter your content requiring you to spend even more time on whatever [method](https://www.evidenced.app/blog/8-alternatives-to-star-method) they swear by. This application's goal is to allow software engineers to create custom resumes quickly and easily by just selecting which points are relevant to said job title. Data is stored in YAML files, and the final PDF is generated using Typst. all this following this guy - [The Headless HeadHunter](https://www.headlessheadhunter.org/how-to-get-a-job).
-
-## Project Structure
-
-```
-src/
-├── main.rs           # Entry point
-├── app.rs            # App state & event handling
-├── pdf.rs            # PDF generation
-├── typst_backend.rs  # Typst integration
-├── models/           # Data models
-│   ├── mod.rs
-│   ├── types.rs      # Struct definitions
-│   └── resume.rs     # Loading logic
-└── ui/               # Render logic
-    ├── mod.rs
-    ├── welcome.rs
-    ├── profile.rs
-    ├── education.rs
-    ├── experience.rs
-    ├── projects.rs
-    ├── job_titles.rs
-    └── status.rs
-```
-
-## Features
-
-- **Straightforward Interface**: Literally just click enter.
-- **Multi-section selection**: Choose from your profile, education, experience, and projects.
-- **Live selection**: Toggle which items to include in your final resume using checkboxes.
-- **Granular Experience Tuning**: Drill down into job experiences to explicitly toggle specific bullet points on or off.
-- **Modular Data Omission**: Selectively omit your email or phone number directly from the UI.
-- **Dynamic Profiles**: Maintain multiple job titles with accompanying professional summaries, selecting the best fit for the target role in one step.
-- **PDF export**: Automatically generates a professional PDF using Typst templates
-- **YAML-based data**: Easy to maintain and version control your resume data
-
-## How do I use it?
-
-- Grab the latest release from the [releases page](https://github.com/cntrvsy/resume-pipeline/releases).
-- Be sure to download the resume-data.zip file from the same release.
-- Unzip the resume-data.zip file and place its contents in the same directory as the resume-pipeline executable. The folder should look like this:
-
-```
-resume-pipeline-linux-x86_64(example executable)
-data/
-├── education.yaml
-├── experience.yaml
-├── jobtitles.yaml
-├── profile.yaml
-└── projects.yaml etc...
-```
-
-- open your terminal your terminal of choice,(if your using powershell its done differently etc, im using linux so mine looks like this)
-
-```
-./resume-pipeline-linux-x86_64
-```
-
-- majority of your time should be spend editing the provided YAML files in the data directory, using a text editor of your choice use the format provided it breaks otherwise.
-  **TAKE NOTE OF THE INTERNAL STRUCTURE OF THE YAML FILES**
-
-## Building from Source
-
-### Prerequisites
-
-- Rust toolchain (1.70 or later)
-- Cargo package manager
-
-### Commands
-
+### Building from Source
 ```bash
-git clone <repository-url>
+git clone https://github.com/cntrvsy/resume-pipeline
 cd resume-pipeline
-cargo build --release
-```
-
-The binary will be available at `target/release/resume-pipeline`
-
-## Usage
-
-### 1. Your Data
-
-Inside the `data/` directory you'll find:
-
-- `profile.yaml` - Your personal information
-- `education.yaml` - Educational background
-- `experience.yaml` - Work experience
-- `projects.yaml` - Side projects and portfolio
-- `jobtitles.yaml` - Job titles and accompanying professional summaries
-
-- `output/resume.pdf` - Your generated resume
-- `templates/default_resume_template.typ` - You are also free to copy paste this template into the [typst app](https://typst.app) it works by itself plus the online editor is really amazing.
-
-**TAKE NOTE OF THE INTERNAL STRUCTURE OF THE YAML FILES**
-
-### 2. Run the Application
-
-```bash
 cargo run --release
-# or if installed
-./target/release/resume-pipeline
 ```
 
-### 3. Navigate the Interface
+## ✨ Features
 
-1. **Welcome Screen**: Press `Enter` to start
-2. **Job Title Selection**: Select a target job title using `j`/`k`. The accompanying professional summary is automatically selected and shown in the preview panel.
-3. **Profile View**: Review your personal information. Toggle Email (`e`) and Phone Number (`p`) visibility, press `Enter` to continue.
-4. **Education Selection**: Use `j`/`k` or arrow keys to navigate, `Space` to toggle selection.
-5. **Experience Selection**: Use `Space` to toggle entire roles. Press `e` or `Right Arrow` to drill down and toggle individual bullet points.
-6. **Projects Selection**: Choose projects to include in your resume.
-7. **Generate**: Press `Enter` on the final screen to generate your PDF.
+- **Granular Control**: Toggle individual bullet points and sections on the fly.
+- **Dynamic Profiles**: Quickly switch between multiple job titles and summaries.
+- **YAML Driven**: Maintain your resume data in simple, version-controllable YAML files.
+- **Typst Integration**: High-quality PDF generation via custom templates.
+- **Privacy First**: Selectively omit phone numbers or emails directly from the UI.
 
-### 4. Find Your Resume
+## ⌨️ Keyboard Shortcuts
 
-Your generated resume will be saved to `output/resume.pdf`
+| Key | Action |
+| :--- | :--- |
+| `Enter` | Proceed / Generate PDF |
+| `Backspace` | Previous screen |
+| `Space` | Toggle item inclusion |
+| `j` / `k` or `↑` / `↓` | Navigate selection |
+| `e` / `→` | Drill down into experience bullets |
+| `e` / `p` | Toggle Email / Phone (Profile screen) |
+| `q` | Quit |
 
-## Keyboard Shortcuts
+## 📂 Project Structure
 
-- `Enter` - Proceed to next screen / Generate PDF
-- `Backspace` - Go back to previous screen
-- `j` / `Down Arrow` - Move selection down
-- `k` / `Up Arrow` - Move selection up
-- `Space` - Toggle item inclusion
-- `e` / `p` - Toggle Email/Phone (Profile screen)
-- `e` / `Right Arrow` - Drill down into experience bullets (Experience screen)
-- `q` - Quit application
-
-## Customizing the Template
-
-The Typst template is located at `data/templates/default_resume_template.typ`. You can modify this file to change the appearance and layout of your resume.
-
-The template receives your filtered data directly from Rust via Typst's `sys.inputs` mechanism - no JSON files needed! The data is passed in-memory using the `compile_with_input()` function.
-
-## Project Structure
-
-```
-resume-pipeline/
-├── data/                   # YAML data files
-│   ├── profile.yaml
-│   ├── education.yaml
-│   ├── experience.yaml     #each bullet point can be toggled, so you can add as many as you want.
-│   ├── jobtitles.yaml      #each job title has an accompanying professional summary.
-│   ├── projects.yaml
-│   └── templates/          # Typst templates
-│       └── default_resume_template.typ
-├── src/
-│   ├── main.rs            # TUI application logic
-│   └── models.rs          # Data structures and YAML parsing
-└── output/                # Generated PDFs
-    └── resume.pdf         # Your generated resume
+```text
+.
+├── data/
+│   ├── profile.yaml      # Personal info
+│   ├── experience.yaml   # Work history (toggable bullets)
+│   ├── jobtitles.yaml    # Titles & summaries
+│   └── templates/        # Typst (.typ) templates
+├── output/               # Generated PDFs
+└── src/                  # Rust source code
 ```
 
-## Technologies Used
+## 🔧 Customization
 
-- **Ratatui**: Terminal UI framework
-- **Crossterm**: Cross-platform terminal manipulation
-- **Serde**: Serialization/deserialization for YAML
-- **Typst**: Document typesetting and PDF generation
-- **typst-as-lib**: Rust wrapper for Typst compiler
-- **derive_typst_intoval**: Automatic Rust-to-Typst type conversion
-- **Color-eyre**: Error handling and reporting
+1. **Data**: Edit the YAML files in `data/` to update your info. Keep the existing structure.
+2. **Template**: Modify `data/templates/default_resume_template.typ` to change the PDF layout. The template receives filtered data via `sys.inputs`.
 
-## Troubleshooting
+## 🛠 Troubleshooting
 
-### "No data found" errors
+- **Missing Files**: Ensure the `data/` folder is in the same directory as the binary.
+- **YAML Errors**: Validate your YAML syntax if the app fails to load data.
+- **PDF Fails**: Check the TUI error screen for Typst compilation messages.
 
-If you see errors about missing YAML files, ensure:
+## 📄 License
 
-1. You're running the application from the project root directory
-2. The `data/` directory exists with all required YAML files
-3. YAML files are properly formatted (use a YAML validator if needed)
-
-### PDF generation fails
-
-If PDF generation fails:
-
-1. Check the error message on the error screen
-2. Be sure that the YAML Files are formatted correctly
-
-### Template not receiving data
-
-The Typst template receives data directly from Rust via `sys.inputs`. This is handled automatically by:
-
-1. Filtering the data to only visible items
-2. Converting the Rust structs to Typst Dict using `derive_typst_intoval`
-3. Passing data with `compile_with_input(filtered_data)`
-
-If this fails, check:
-
-- All data structs properly derive `DeriveIntoValue` and `IntoDict`
-- The template uses `#import sys: inputs` to access the data
-
-### Navigation doesn't work
-
-Make sure your terminal supports the key bindings:
-
-- Try using arrow keys instead of `j`/`k`
-- Ensure your terminal emulator is properly configured
-
-## Contributing
-
-I'm not currently accepting Pull Requests for this project. However, you are more than welcome to fork the repository and customize it to your heart's content!
-
-## License
-
-Copyright (c) cntrvsy <benintangana@gmail.com>
-
-This project is licensed under the MIT license ([LICENSE] or <http://opensource.org/licenses/MIT>)
-
-[LICENSE]: ./LICENSE
+MIT © 2026 [frstudios.co.ke](https://frstudios.co.ke). Forking is welcome; pull requests are not currently accepted.
