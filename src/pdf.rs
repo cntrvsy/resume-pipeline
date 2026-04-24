@@ -1,6 +1,5 @@
 use color_eyre::Result;
 use std::fs;
-use std::path::Path;
 use typst::foundations::Dict;
 use typst_pdf::PdfOptions;
 
@@ -34,13 +33,13 @@ fn get_current_year() -> u64 {
 
 // PDF GENERATION
 pub fn generate_pdf(data: &ResumeData) -> Result<String> {
-    let output_dir = Path::new("data/output");
+    let current_dir = std::env::current_dir()?;
+    let output_dir = current_dir.join("data").join("output");
+
     if !output_dir.exists() {
-        fs::create_dir(output_dir)?;
+        fs::create_dir_all(&output_dir)?;
     }
 
-    // Load template using current_dir to align with models.rs
-    let current_dir = std::env::current_dir()?;
     let template_path = current_dir
         .join("data")
         .join("templates")
@@ -99,7 +98,9 @@ pub fn generate_pdf(data: &ResumeData) -> Result<String> {
     if let Some(ref title) = data.job_title {
         let trimmed_title = title.trim();
         if !trimmed_title.is_empty() && trimmed_title != "N/A" {
-            filename_parts.push(trimmed_title.to_string());
+            // Sanitize title to remove slashes which break file paths
+            let sanitized_title = trimmed_title.replace('/', "-").replace('\\', "-");
+            filename_parts.push(sanitized_title);
         }
     }
 
@@ -114,7 +115,9 @@ pub fn generate_pdf(data: &ResumeData) -> Result<String> {
         base_filename = "resume".to_string();
     }
 
-    let filename = format!("{}.pdf", base_filename);
+    // Final sanitization of the whole base filename just in case
+    let safe_filename = base_filename.replace('/', "-").replace('\\', "-");
+    let filename = format!("{}.pdf", safe_filename);
     let output_path = output_dir.join(&filename);
     fs::write(&output_path, pdf_data)?;
 
