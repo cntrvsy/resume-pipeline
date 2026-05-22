@@ -369,8 +369,14 @@ impl App {
                 KeyCode::Char('k') | KeyCode::Up => self.previous_experience(),
                 KeyCode::Char(' ') => self.toggle_experience(),
                 KeyCode::Char('e') | KeyCode::Right => {
-                    self.current_screen = CurrentScreen::ExperienceBulletSelection;
-                    self.experience_bullet_list_state.select(Some(0));
+                    if let Some(job_index) = self.experience_list_state.selected() {
+                        if let Some(job) = self.data.experience.get(job_index) {
+                            if !job.bullets.is_empty() {
+                                self.current_screen = CurrentScreen::ExperienceBulletSelection;
+                                self.experience_bullet_list_state.select(Some(0));
+                            }
+                        }
+                    }
                 }
                 KeyCode::Enter => {
                     self.current_screen = CurrentScreen::ProjectsSelection;
