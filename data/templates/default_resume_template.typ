@@ -14,6 +14,12 @@
   ),
   job_title: "Fullstack Engineer",
   professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions using Rust, Go, and React. Strong focus on performance optimization and system architecture.",
+  skills: (
+    Languages: ("TypeScript", "Rust", "Python", "SQL"),
+    "Frontend & UI": ("React", "Svelte", "Tailwind CSS"),
+    "Backend & APIs": ("Node.js", "Hono", "REST", "gRPC"),
+    "Tools & Infra": ("Docker", "Vercel", "Git", "PostgreSQL")
+  ),
   education: (
     (school: "University of Tech", degree: "B.Sc. Computer Science", status: "Graduated May 2019"),
   ),
@@ -30,7 +36,6 @@
       )
     ),
   ),
-  // EXPANDED FAKE PROJECT DATA
   projects: (
     (
       title: "Distributed Task Scheduler",
@@ -61,86 +66,101 @@
 
 #let resume_data = if "profile" in inputs { inputs } else { fallback_data }
 
+// STYLING DESIGN TOKENS
+#let accent_color = rgb("#0f172a") // Slate 900 for dark crisp headers
+#let secondary_color = rgb("#475569") // Slate 600 for dates & metadata
+#let rule_color = rgb("#cbd5e1") // Slate 300 for clean divider lines
+
 #set page(
-  paper: "us-letter",
-  margin: (x: 0.75in, y: 0.6in),
+  paper: "a4", // Preferred in UK/EU market (or us-letter)
+  margin: (x: 0.65in, y: 0.55in),
 )
 
 #set text(
   font: "Liberation Sans",
   lang: "en",
-  size: 10pt,
-  fill: black,
+  size: 9.5pt,
+  fill: rgb("#1e293b"), // Dark charcoal text for better contrast than harsh black
   weight: "regular"
 )
 
-#set par(leading: 0.55em, justify: true)
+#set par(leading: 0.5em, justify: false)
 
 // 2. COMPONENTS
 
 #let header_component(profile) = {
   align(center)[
-    #text(size: 16pt, weight: "bold")[#profile.name]
-    #v(4pt)
-    #text(size: 10pt)[
+    #text(size: 18pt, weight: "bold", fill: accent_color)[#profile.name]
+    #v(3pt)
+    #text(size: 9.5pt)[
       #let contact_items = (
         if profile.phone != "" { profile.phone },
         if profile.email != "" { link("mailto:" + profile.email)[#profile.email] },
-        if profile.url != "" { link("https://" + profile.url)[Linked In] },
+        if profile.url != "" { link("https://" + profile.url)[#profile.url] },
         if profile.website != "" { link("https://" + profile.website)[#profile.website] },
       ).filter(it => it != none)
-      #contact_items.join(" | ") \
-      #profile.citizenship #sym.bullet #profile.location
+      #contact_items.join("  •  ") \
+      #v(2pt)
+      #text(fill: secondary_color)[#profile.citizenship  #sym.bullet  #profile.location]
     ]
   ]
-  v(12pt)
+  v(6pt)
 }
 
 #let job_title_component(title) = {
   align(center)[
-    #v(-8pt)
-    #text(size: 11pt, weight: "bold", fill: black)[#title] // Removed .upper()
-    #v(8pt)
+    #text(size: 11pt, weight: "bold", fill: accent_color, tracking: 0.03em)[#upper(title)]
+    #v(6pt)
   ]
 }
 
 #let summary_component(summary) = {
   if summary != "" and summary != "N/A" {
     align(left)[
-      #text(style: "normal", size: 10pt)[#summary]
-      #v(8pt)
+      #text(size: 9.5pt)[#summary]
+      #v(6pt)
     ]
   }
 }
 
 #let section_title(title) = {
-  v(10pt)
-  block(width: 100%, stroke: (bottom: 0.5pt + gray))[
-    #text(size: 10pt, weight: "bold")[#title] // Removed .upper()
+  v(8pt)
+  block(width: 100%, stroke: (bottom: 0.6pt + rule_color))[
+    #text(size: 10pt, weight: "bold", fill: accent_color, tracking: 0.04em)[#upper(title)]
   ]
-  v(4pt)
+  v(3pt)
+}
+
+#let skills_component(skills) = {
+  if skills != none and skills != (:) {
+    section_title("Technical Skills")
+    for (category, items) in skills [
+      #text(weight: "bold", fill: accent_color)[#category:] #items.join("  •  ") \
+    ]
+    v(3pt)
+  }
 }
 
 #let edu_item(degree, school, status) = {
   grid(
     columns: (1fr, auto),
-    column-gutter: 2em, // Increased gutter for breathing room
+    column-gutter: 1.5em,
     [#strong(school)],
-    text(style: "italic")[#status]
+    text(style: "italic", fill: secondary_color)[#status]
   )
   [#degree]
-  v(6pt)
+  v(4pt)
 }
 
 #let work_item(role, company, location, date, summary, highlights, url: none) = {
   grid(
     columns: (1fr, auto),
-    column-gutter: 2em, // Ensures text doesn't hit the date
+    column-gutter: 1.5em,
     [
-      #strong(role) #if company != "" [| #text(style: "italic")[#company, #location]]
+      #strong(role) #if company != "" [| #text(style: "italic")[#company #if location != "" [, #location]]]
       #if url != none [ | #link("https://" + url)[#url] ]
     ],
-    text(style: "italic")[#date]
+    text(style: "italic", fill: secondary_color)[#date]
   )
 
   if summary != "" {
@@ -149,13 +169,13 @@
   }
 
   if highlights != none {
-    set list(indent: 1.2em, body-indent: 0.5em, spacing: 0.4em)
+    set list(indent: 1em, body-indent: 0.4em, spacing: 0.32em)
     for point in highlights {
       list.item[#point]
     }
   }
 
-  v(8pt)
+  v(6pt)
 }
 
 // 3. RENDER
@@ -166,21 +186,20 @@
 
 #summary_component(resume_data.at("professional_summary", default: ""))
 
-#section_title("Education")
-#for edu in resume_data.education [
-  #edu_item(edu.degree, edu.school, edu.status)
-]
+#skills_component(resume_data.at("skills", default: none))
 
-#section_title("Work Experience")
-#for job in resume_data.experience [
-  #work_item(
-    job.role,
-    job.company,
-    job.location,
-    job.date,
-    job.summary,
-    job.bullets
-  )
+#if resume_data.experience != () [
+  #section_title("Work Experience")
+  #for job in resume_data.experience [
+    #work_item(
+      job.role,
+      job.company,
+      job.location,
+      job.date,
+      job.summary,
+      job.bullets
+    )
+  ]
 ]
 
 #if resume_data.projects != () [
@@ -195,5 +214,12 @@
       proj.tech_stack,
       url: proj.at("url", default: none)
     )
+  ]
+]
+
+#if resume_data.education != () [
+  #section_title("Education")
+  #for edu in resume_data.education [
+    #edu_item(edu.degree, edu.school, edu.status)
   ]
 ]

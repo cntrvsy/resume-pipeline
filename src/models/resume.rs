@@ -178,6 +178,20 @@ impl ResumeData {
                 .professional_summary
                 .clone()
                 .unwrap_or_else(|| "N/A".to_string()),
+            skills: {
+                if let Some(ref title) = self.job_title {
+                    self.job_titles
+                        .iter()
+                        .find(|jt| &jt.title == title)
+                        .and_then(|jt| jt.skills.clone())
+                        .unwrap_or_default()
+                } else {
+                    self.job_titles
+                        .first()
+                        .and_then(|jt| jt.skills.clone())
+                        .unwrap_or_default()
+                }
+            },
         }
     }
 }
