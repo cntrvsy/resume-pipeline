@@ -36,6 +36,7 @@ fn test_welcome_to_job_title_transition() {
     app.data.job_titles.push(crate::models::types::JobTitle {
         title: "Developer".to_string(),
         professional_summary: "Developer summary".to_string(),
+        skills: None,
     });
     app.job_title_list_state.select(Some(0));
 
@@ -52,13 +53,18 @@ fn test_welcome_to_job_title_transition() {
 
 fn create_mock_app() -> App {
     let mut app = App::default();
+    let mut skills_map = std::collections::BTreeMap::new();
+    skills_map.insert("Languages".to_string(), vec!["Rust".to_string(), "TypeScript".to_string()]);
+
     app.data.job_titles.push(JobTitle {
         title: "Software Engineer".to_string(),
         professional_summary: "Summary".to_string(),
+        skills: Some(skills_map),
     });
     app.data.job_titles.push(JobTitle {
         title: "Senior Software Engineer".to_string(),
         professional_summary: "Senior Summary".to_string(),
+        skills: None,
     });
 
     app.data.profile = Some(Profile {
@@ -354,8 +360,25 @@ fn test_terminal_screens_exit_keys() {
 fn test_unmapped_keys_ignored() {
     let mut app = create_mock_app();
     app.current_screen = CurrentScreen::Welcome;
-    
-    // Random key that isn't mapped
-    app.handle_key_event(KeyCode::Char('x'));
-    assert_eq!(app.current_screen, CurrentScreen::Welcome); // State shouldn't change
+
+    app.handle_key_event(KeyCode::Char('z'));
+    assert_eq!(app.current_screen, CurrentScreen::Welcome);
+}
+
+#[test]
+fn test_skills_propagation() {
+    let mut app = create_mock_app();
+    app.data.job_title = Some("Software Engineer".to_string());
+    let filtered = app.data.to_filtered_data();
+
+    assert!(filtered.skills.contains_key("Languages"));
+    assert_eq!(filtered.skills.get("Languages").unwrap(), &vec!["Rust".to_string(), "TypeScript".to_string()]);
+}
+
+#[test]
+fn test_pdf_generation() {
+    let mut app = create_mock_app();
+    app.data.job_title = Some("Software Engineer".to_string());
+    let pdf_path = crate::pdf::generate_pdf(&app.data);
+    assert!(pdf_path.is_ok(), "PDF generation failed: {:?}", pdf_path.err());
 }

@@ -29,6 +29,8 @@ pub struct Profile {
 pub struct JobTitle {
     pub title: String,
     pub professional_summary: String,
+    #[serde(default)]
+    pub skills: Option<std::collections::BTreeMap<String, Vec<String>>>,
 }
 
 
@@ -80,6 +82,7 @@ pub struct FilteredResumeData {
     pub projects: Vec<Project>,
     pub job_title: String,
     pub professional_summary: String,
+    pub skills: std::collections::BTreeMap<String, Vec<String>>,
 }
 
 // Wrapper for education YAML parsing
@@ -156,6 +159,13 @@ impl From<FilteredResumeData> for Dict {
             "professional_summary".into(),
             val.professional_summary.into_value(),
         );
+
+        let mut skills_dict = Dict::new();
+        for (category, skill_list) in val.skills {
+            skills_dict.insert(category.into(), skill_list.into_value());
+        }
+        dict.insert("skills".into(), Value::Dict(skills_dict));
+
         dict
     }
 }

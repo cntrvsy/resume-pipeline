@@ -1,8 +1,39 @@
 - title: "Fullstack Engineer"
   professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions using Rust, Go, and React. Strong focus on performance optimization and system architecture."
+  skills:
+    Languages: ["TypeScript", "Rust", "Python", "SQL"]
+    Frontend & UI: ["React", "Svelte", "Tailwind CSS"]
+    Backend & APIs: ["Node.js", "Hono", "REST", "gRPC"]
+    Tools & Infra: ["Docker", "Vercel", "Git", "PostgreSQL"]
+
+- title: "Data Analyst"
+  professional_summary: "Data analyst specializing in interactive business intelligence dashboards, automated SQL data pipelines, and quantitative insights driving strategic decision-making."
+  skills:
+    Languages & Querying: ["SQL", "Python"]
+    BI & Visualization: ["PowerBI", "Tableau"]
+    Data Libraries: ["pandas", "NumPy", "ClickHouse"]
+    Tools & Cloud: ["Git", "Excel", "PostgreSQL"]
+
 - title: "Rust Developer"
   professional_summary: "Detail-oriented Backend Developer specializing in building robust, high-performance APIs and microservices. Expert in database design (PostgreSQL, MongoDB) and message brokers (Kafka, RabbitMQ) to handle large-scale data processing."
+  skills:
+    Languages: ["Rust", "C++", "SQL"]
+    Backend & Systems: ["Tokio", "Axum", "gRPC", "Protobuf"]
+    Databases & Queues: ["PostgreSQL", "Redis", "Kafka", "MongoDB"]
+    Tools & DevOps: ["Docker", "Linux", "Git", "CI/CD"]
+
 - title: "Frontend Specialist"
   professional_summary: "Innovative Frontend Architect with a passion for creating intuitive and responsive user interfaces. Extensive experience with modern JavaScript frameworks (Svelte, Next.js) and a deep understanding of web performance, accessibility, and modern CSS."
+  skills:
+    Languages: ["TypeScript", "JavaScript", "HTML5", "CSS3"]
+    Frameworks: ["React", "Svelte", "Next.js"]
+    State & Styling: ["Redux", "Tailwind CSS", "CSS Modules"]
+    Tools & Testing: ["Vite", "Jest", "Cypress", "Git"]
+
 - title: "DevOps Engineer"
   professional_summary: "Enthusiastic and results-driven Technical Lead. Adept at managing cross-functional teams to deliver high-quality software products on time. Experienced in cloud-native architectures, containerization (Docker, Kubernetes), and CI/CD pipelines."
+  skills:
+    Cloud & Infra: ["AWS", "Kubernetes", "Docker", "Terraform"]
+    CI/CD & Scripting: ["GitHub Actions", "Python", "Bash"]
+    Monitoring & Logging: ["Prometheus", "Grafana", "ELK Stack"]
+    Networking & Security: ["Nginx", "Linux", "IAM", "TLS"]
