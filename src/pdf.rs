@@ -31,14 +31,15 @@ fn get_current_year() -> u64 {
     year
 }
 
+use std::path::{Path, PathBuf};
+
 // PDF GENERATION
 pub fn generate_pdf(data: &ResumeData) -> Result<String> {
-    let current_dir = std::env::current_dir()?;
-    let output_dir = current_dir.join("data").join("output");
+    generate_pdf_with_export(data, None)
+}
 
-    if !output_dir.exists() {
-        fs::create_dir_all(&output_dir)?;
-    }
+pub fn generate_pdf_with_export(data: &ResumeData, export_target: Option<&str>) -> Result<String> {
+    let current_dir = std::env::current_dir()?;
 
     let template_path = current_dir
         .join("data")
@@ -117,9 +118,38 @@ pub fn generate_pdf(data: &ResumeData) -> Result<String> {
 
     // Final sanitization of the whole base filename just in case
     let safe_filename = base_filename.replace('/', "-").replace('\\', "-");
-    let filename = format!("{}.pdf", safe_filename);
-    let output_path = output_dir.join(&filename);
-    fs::write(&output_path, pdf_data)?;
+    let default_filename = format!("{}.pdf", safe_filename);
 
-    Ok(output_path.to_string_lossy().to_string())
+    let final_output_path: PathBuf = if let Some(target) = export_target {
+        let path = Path::new(target);
+        let is_pdf_file = target.to_lowercase().ends_with(".pdf");
+        let is_directory = target.ends_with('/')
+            || target.ends_with('\\')
+            || path.is_dir()
+            || (!is_pdf_file && path.extension().is_none());
+
+        if is_directory {
+            if !path.exists() {
+                fs::create_dir_all(path)?;
+            }
+            path.join(default_filename)
+        } else {
+            if let Some(parent) = path.parent() {
+                if !parent.as_os_str().is_empty() && !parent.exists() {
+                    fs::create_dir_all(parent)?;
+                }
+            }
+            path.to_path_buf()
+        }
+    } else {
+        let output_dir = current_dir.join("data").join("output");
+        if !output_dir.exists() {
+            fs::create_dir_all(&output_dir)?;
+        }
+        output_dir.join(default_filename)
+    };
+
+    fs::write(&final_output_path, pdf_data)?;
+
+    Ok(final_output_path.to_string_lossy().to_string())
 }

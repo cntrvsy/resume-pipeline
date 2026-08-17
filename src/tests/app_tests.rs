@@ -418,5 +418,71 @@ fn test_preset_dump_schema() {
     assert!(schema.contains("projects:"));
 }
 
+#[test]
+fn test_unmatched_diagnostics_and_json_report() {
+    let mut app = create_mock_app();
+    let preset = crate::models::SelectionPreset {
+        job_title: Some("Nonexistent Title".to_string()),
+        projects: Some(vec!["Nonexistent Project".to_string()]),
+        education: Some(vec!["Nonexistent School".to_string()]),
+        experience: Some(vec![crate::models::ExperienceFilter {
+            company: "FooBar Baz Inc".to_string(),
+            bullets: Some(vec!["Nonexistent Bullet".to_string()]),
+        }]),
+        ..Default::default()
+    };
+
+    let report = app.data.apply_preset(&preset);
+
+    assert!(report.has_unmatched());
+    assert_eq!(report.unmatched_job_title, Some("Nonexistent Title".to_string()));
+    assert_eq!(report.unmatched_projects, vec!["Nonexistent Project".to_string()]);
+    assert_eq!(report.unmatched_education, vec!["Nonexistent School".to_string()]);
+    assert_eq!(report.unmatched_companies, vec!["FooBar Baz Inc".to_string()]);
+    assert_eq!(
+        report.unmatched_bullets,
+        vec![crate::models::preset::UnmatchedBullet {
+            company: "FooBar Baz Inc".to_string(),
+            query: "Nonexistent Bullet".to_string(),
+        }]
+    );
+
+    let json_val = report.to_json_value("failed", None);
+    assert_eq!(json_val["status"], "failed");
+    assert_eq!(json_val["validation"]["job_title"]["matched"], false);
+    assert_eq!(json_val["validation"]["projects"]["missing"][0], "Nonexistent Project");
+}
+
+#[test]
+fn test_data_item_listing() {
+    let app = create_mock_app();
+    let text = app.data.list_items_text();
+    assert!(text.contains("=== SELECTABLE JOB TITLES ==="));
+    assert!(text.contains("Software Engineer"));
+    assert!(text.contains("=== SELECTABLE PROJECTS ==="));
+    assert!(text.contains("Project 1"));
+
+    let json = app.data.list_items_json();
+    assert_eq!(json["status"], "success");
+    assert_eq!(json["job_titles"][0]["title"], "Software Engineer");
+    assert_eq!(json["projects"][0]["title"], "Project 1");
+}
+
+#[test]
+fn test_custom_export_path() {
+    let mut app = create_mock_app();
+    app.data.job_title = Some("Software Engineer".to_string());
+
+    let custom_target = "data/output/test_custom_cv.pdf";
+    let pdf_path = crate::pdf::generate_pdf_with_export(&app.data, Some(custom_target));
+    assert!(pdf_path.is_ok(), "Custom PDF export failed: {:?}", pdf_path.err());
+    assert_eq!(pdf_path.unwrap(), custom_target);
+    assert!(std::path::Path::new(custom_target).exists());
+
+    // Cleanup
+    let _ = std::fs::remove_file(custom_target);
+}
+
+
 
 

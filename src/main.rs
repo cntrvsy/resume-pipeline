@@ -16,14 +16,40 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
+    let is_list = cli.list_items
+        || cli.command.as_deref() == Some("list")
+        || cli.command.as_deref() == Some("dump-data");
+
     // 1. Schema Dump Mode
     if cli.dump_schema {
-        println!("{}", dump_preset_schema());
+        if cli.json {
+            println!(
+                "{}",
+                serde_json::json!({
+                    "status": "success",
+                    "schema": dump_preset_schema()
+                })
+            );
+        } else {
+            println!("{}", dump_preset_schema());
+        }
         return Ok(());
     }
 
-    // 2. Load Master Data & Apply Presets
+    // 2. Data Item Listing Mode (--list-items / list / dump-data)
+    if is_list {
+        let app = App::new();
+        if cli.json {
+            println!("{}", serde_json::to_string_pretty(&app.data.list_items_json())?);
+        } else {
+            println!("{}", app.data.list_items_text());
+        }
+        return Ok(());
+    }
+
+    // 3. Load Master Data & Apply Presets
     let mut app = App::new();
+    let mut report_opt = None;
 
     if let Some(ref preset_path) = cli.preset {
         let preset_str = fs::read_to_string(preset_path).map_err(|e| {
@@ -34,14 +60,38 @@ fn main() -> Result<()> {
         })?;
 
         let report = app.data.apply_preset(&preset);
-        report.print_summary();
+        report_opt = Some(report);
     }
 
     if let Some(ref job_title) = cli.job {
         app.data.job_title = Some(job_title.clone());
     }
 
-    // 3. Dump TUI Screen Text Mode
+    // 4. Dry-Run / Validation Flag (--validate / --check)
+    if cli.validate {
+        let report = report_opt.unwrap_or_default();
+        let status = if report.has_unmatched() {
+            "failed"
+        } else {
+            "success"
+        };
+
+        if cli.json {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&report.to_json_value(status, None))?
+            );
+        } else {
+            report.print_summary();
+        }
+
+        if report.has_unmatched() {
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
+
+    // 5. Dump TUI Screen Text Mode
     if cli.dump_screen {
         let backend = TestBackend::new(100, 30);
         let mut terminal = Terminal::new(backend)?;
@@ -59,14 +109,38 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // 4. Non-Interactive Export Mode
-    if cli.export.is_some() {
-        let pdf_path = pdf::generate_pdf(&app.data)?;
-        println!("Successfully generated resume PDF at: {}", pdf_path);
+    // 6. Non-Interactive Export Mode
+    if let Some(ref export_path_arg) = cli.export {
+        let pdf_path = pdf::generate_pdf_with_export(&app.data, Some(export_path_arg))?;
+        let report = report_opt.unwrap_or_default();
+        let status = if report.has_unmatched() {
+            "warning"
+        } else {
+            "success"
+        };
+
+        if cli.json {
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&report.to_json_value(status, Some(&pdf_path)))?
+            );
+        } else {
+            if cli.preset.is_some() {
+                report.print_summary();
+            }
+            println!("Successfully generated resume PDF at: {}", pdf_path);
+        }
         return Ok(());
     }
 
-    // 5. Interactive TUI Mode
+    // If preset was applied in TUI mode
+    if !cli.json {
+        if let Some(ref report) = report_opt {
+            report.print_summary();
+        }
+    }
+
+    // 7. Interactive TUI Mode
     let mut terminal = ratatui::init();
     let app_result = run(&mut terminal, &mut app);
     ratatui::restore();
