@@ -382,3 +382,41 @@ fn test_pdf_generation() {
     let pdf_path = crate::pdf::generate_pdf(&app.data);
     assert!(pdf_path.is_ok(), "PDF generation failed: {:?}", pdf_path.err());
 }
+
+#[test]
+fn test_preset_application_and_validation() {
+    let mut app = create_mock_app();
+    let preset = crate::models::SelectionPreset {
+        job_title: Some("Software Engineer".to_string()),
+        professional_summary: Some("Tailored summary test".to_string()),
+        projects: Some(vec!["Project 1".to_string()]),
+        education: Some(vec!["Test Uni".to_string()]),
+        experience: Some(vec![crate::models::ExperienceFilter {
+            company: "Corp".to_string(),
+            bullets: Some(vec!["Bullet 1".to_string()]),
+        }]),
+        profile: Some(crate::models::ProfileFilter {
+            show_email: Some(false),
+            show_phone: Some(true),
+        }),
+    };
+
+    let report = app.data.apply_preset(&preset);
+
+    assert_eq!(report.matched_job_title, Some("Software Engineer".to_string()));
+    assert_eq!(app.data.professional_summary, Some("Tailored summary test".to_string()));
+    assert_eq!(report.matched_projects, vec!["Project 1".to_string()]);
+    assert_eq!(report.matched_bullets, 1);
+    assert_eq!(app.data.profile.as_ref().unwrap().show_email, false);
+}
+
+#[test]
+fn test_preset_dump_schema() {
+    let schema = crate::cli::dump_preset_schema();
+    assert!(schema.contains("job_title:"));
+    assert!(schema.contains("experience:"));
+    assert!(schema.contains("projects:"));
+}
+
+
+

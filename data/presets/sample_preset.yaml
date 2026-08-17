@@ -1,0 +1,19 @@
+job_title: "Fullstack Engineer"
+professional_summary: "Highly skilled Software Engineer specializing in Rust APIs and modern web applications."
+
+projects:
+  - "Resume TUI Generator"
+
+education:
+  - "school name"
+
+experience:
+  - company: "Company Name"
+    bullets:
+      - "Integrated Paystack/Stripe"
+      - "TailwindCSS"
+      - "automated testing"
+
+profile:
+  show_email: true
+  show_phone: true
