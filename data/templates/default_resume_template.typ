@@ -67,77 +67,111 @@
 #let resume_data = if "profile" in inputs { inputs } else { fallback_data }
 
 // STYLING DESIGN TOKENS
-#let accent_color = rgb("#0f172a") // Slate 900 for dark crisp headers
-#let secondary_color = rgb("#475569") // Slate 600 for dates & metadata
-#let rule_color = rgb("#cbd5e1") // Slate 300 for clean divider lines
+#let accent_color = rgb("#0f766e") // Deep Teal accent
+#let secondary_color = rgb("#475569") // Slate 600 for metadata & dates
+#let body_color = rgb("#1e293b") // Slate 800 dark charcoal for text contrast
+#let rule_color = rgb("#e2e8f0") // Slate 200 light divider lines
+#let pill_bg = rgb("#f1f5f9") // Slate 100 soft tag background
+#let pill_border = rgb("#cbd5e1") // Slate 300 tag border
 
 #set page(
-  paper: "a4", // Preferred in UK/EU market (or us-letter)
-  margin: (x: 0.65in, y: 0.55in),
+  paper: "a4",
+  margin: (x: 0.6in, y: 0.5in),
 )
 
 #set text(
   font: "Liberation Sans",
   lang: "en",
   size: 9.5pt,
-  fill: rgb("#1e293b"), // Dark charcoal text for better contrast than harsh black
+  fill: body_color,
   weight: "regular"
 )
 
-#set par(leading: 0.5em, justify: false)
+#set par(leading: 0.55em, justify: false)
 
 // 2. COMPONENTS
 
-#let header_component(profile) = {
-  align(center)[
-    #text(size: 18pt, weight: "bold", fill: accent_color)[#profile.name]
-    #v(3pt)
-    #text(size: 9.5pt)[
-      #let contact_items = (
-        if profile.phone != "" { profile.phone },
-        if profile.email != "" { link("mailto:" + profile.email)[#profile.email] },
-        if profile.url != "" { link("https://" + profile.url)[#profile.url] },
-        if profile.website != "" { link("https://" + profile.website)[#profile.website] },
-      ).filter(it => it != none)
-      #contact_items.join("  •  ") \
-      #v(2pt)
-      #text(fill: secondary_color)[#profile.citizenship  #sym.bullet  #profile.location]
-    ]
-  ]
-  v(6pt)
-}
+#let header_component(profile, job_title) = {
+  let contact_items = ()
+  if profile.phone != "" { contact_items.push(profile.phone) }
+  if profile.email != "" { contact_items.push(link("mailto:" + profile.email)[#profile.email]) }
+  if profile.url != "" { contact_items.push(link("https://" + profile.url)[#profile.url]) }
+  if profile.website != "" { contact_items.push(link("https://" + profile.website)[#profile.website]) }
+  let location_str = (
+    if profile.location != "" { profile.location },
+    if profile.citizenship != "" { profile.citizenship }
+  ).filter(it => it != none).join(" • ")
+  if location_str != "" { contact_items.push(text(fill: secondary_color)[#location_str]) }
 
-#let job_title_component(title) = {
-  align(center)[
-    #text(size: 11pt, weight: "bold", fill: accent_color, tracking: 0.03em)[#upper(title)]
-    #v(6pt)
-  ]
+  grid(
+    columns: (1fr, auto),
+    column-gutter: 1.5em,
+    align: (left + horizon, right + horizon),
+    [
+      #text(size: 20pt, weight: "bold", fill: accent_color)[#profile.name] \
+      #v(2pt)
+      #if job_title != "" and job_title != "N/A" [
+        #text(size: 11pt, weight: "bold", fill: secondary_color, tracking: 0.04em)[#upper(job_title)]
+      ]
+    ],
+    align(right)[
+      #set text(size: 8.5pt, fill: body_color)
+      #contact_items.join([ \ ])
+    ]
+  )
+  v(4pt)
+  line(length: 100%, stroke: 1.2pt + accent_color)
+  v(6pt)
 }
 
 #let summary_component(summary) = {
   if summary != "" and summary != "N/A" {
-    align(left)[
-      #text(size: 9.5pt)[#summary]
-      #v(6pt)
+    block(
+      width: 100%,
+      fill: rgb("#f8fafc"),
+      inset: (x: 10pt, y: 8pt),
+      radius: 4pt,
+      stroke: (left: 3pt + accent_color)
+    )[
+      #text(size: 9.25pt, style: "italic", fill: body_color)[#summary]
     ]
+    v(6pt)
   }
 }
 
 #let section_title(title) = {
   v(8pt)
-  block(width: 100%, stroke: (bottom: 0.6pt + rule_color))[
-    #text(size: 10pt, weight: "bold", fill: accent_color, tracking: 0.04em)[#upper(title)]
+  block(width: 100%, inset: (bottom: 3pt), stroke: (bottom: 0.8pt + accent_color))[
+    #grid(
+      columns: (auto, 1fr),
+      gutter: 6pt,
+      align: (left + horizon, left + horizon),
+      box(fill: accent_color, width: 3.5pt, height: 10pt, radius: 1pt),
+      text(size: 10pt, weight: "bold", fill: accent_color, tracking: 0.05em)[#upper(title)]
+    )
   ]
-  v(3pt)
+  v(4pt)
 }
 
 #let skills_component(skills) = {
   if skills != none and skills != (:) {
     section_title("Technical Skills")
-    for (category, items) in skills [
-      #text(weight: "bold", fill: accent_color)[#category:] #items.join("  •  ") \
-    ]
-    v(3pt)
+    for (category, items) in skills {
+      grid(
+        columns: (110pt, 1fr),
+        column-gutter: 10pt,
+        align: (left + top, left + top),
+        text(weight: "bold", fill: accent_color)[#category],
+        items.map(item => box(
+          fill: pill_bg,
+          stroke: 0.4pt + pill_border,
+          inset: (x: 5pt, y: 2.5pt),
+          radius: 3pt
+        )[#text(size: 8.5pt, weight: "medium", fill: body_color)[#item]]).join(" ")
+      )
+      v(4pt)
+    }
+    v(2pt)
   }
 }
 
@@ -145,10 +179,9 @@
   grid(
     columns: (1fr, auto),
     column-gutter: 1.5em,
-    [#strong(school)],
+    [#strong(school) #if degree != "" [ — #degree]],
     text(style: "italic", fill: secondary_color)[#status]
   )
-  [#degree]
   v(4pt)
 }
 
@@ -157,10 +190,11 @@
     columns: (1fr, auto),
     column-gutter: 1.5em,
     [
-      #strong(role) #if company != "" [| #text(style: "italic")[#company #if location != "" [, #location]]]
-      #if url != none [ | #link("https://" + url)[#url] ]
+      #text(weight: "bold", size: 10pt, fill: body_color)[#role]
+      #if company != "" [ #text(fill: accent_color, weight: "semibold")[| #company] #if location != "" [, #text(style: "italic", fill: secondary_color)[#location]]]
+      #if url != none [ | #link("https://" + url)[#text(fill: accent_color)[#url]] ]
     ],
-    text(style: "italic", fill: secondary_color)[#date]
+    text(style: "italic", weight: "medium", fill: secondary_color)[#date]
   )
 
   if summary != "" {
@@ -168,8 +202,9 @@
     summary
   }
 
-  if highlights != none {
-    set list(indent: 1em, body-indent: 0.4em, spacing: 0.32em)
+  if highlights != none and highlights != () {
+    v(2pt)
+    set list(marker: text(fill: accent_color, size: 7pt)[#sym.bullet], indent: 0.8em, body-indent: 0.4em, spacing: 0.35em)
     for point in highlights {
       list.item[#point]
     }
@@ -178,17 +213,49 @@
   v(6pt)
 }
 
+#let project_item(title, description, tech_stack, url: none) = {
+  grid(
+    columns: (1fr, auto),
+    column-gutter: 1.5em,
+    [
+      #text(weight: "bold", size: 10pt, fill: body_color)[#title]
+    ],
+    [
+      #if url != none [ #link("https://" + url)[#text(size: 8.5pt, fill: accent_color)[#url]] ]
+    ]
+  )
+
+  if description != "" {
+    v(2pt)
+    description
+  }
+
+  if tech_stack != none and tech_stack != () {
+    v(3pt)
+    text(size: 8pt, weight: "semibold", fill: secondary_color)[Stack: ]
+    tech_stack.map(tech => box(
+      fill: pill_bg,
+      stroke: 0.4pt + pill_border,
+      inset: (x: 4pt, y: 1.5pt),
+      radius: 2pt
+    )[#text(size: 8pt, fill: body_color)[#tech]]).join(" ")
+  }
+
+  v(6pt)
+}
+
 // 3. RENDER
 
-#header_component(resume_data.profile)
-
-#job_title_component(resume_data.at("job_title", default: "Software Engineer"))
+#header_component(
+  resume_data.profile,
+  resume_data.at("job_title", default: "Software Engineer")
+)
 
 #summary_component(resume_data.at("professional_summary", default: ""))
 
 #skills_component(resume_data.at("skills", default: none))
 
-#if resume_data.experience != () [
+#if resume_data.at("experience", default: ()) != () [
   #section_title("Work Experience")
   #for job in resume_data.experience [
     #work_item(
@@ -202,14 +269,11 @@
   ]
 ]
 
-#if resume_data.projects != () [
+#if resume_data.at("projects", default: ()) != () [
   #section_title("Projects")
   #for proj in resume_data.projects [
-    #work_item(
+    #project_item(
       proj.title,
-      "", 
-      "",
-      "", 
       proj.description,
       proj.tech_stack,
       url: proj.at("url", default: none)
@@ -217,7 +281,7 @@
   ]
 ]
 
-#if resume_data.education != () [
+#if resume_data.at("education", default: ()) != () [
   #section_title("Education")
   #for edu in resume_data.education [
     #edu_item(edu.degree, edu.school, edu.status)
