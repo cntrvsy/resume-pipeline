@@ -194,4 +194,79 @@ impl ResumeData {
             },
         }
     }
+
+    pub fn list_items_text(&self) -> String {
+        let mut out = String::new();
+
+        out.push_str("=== SELECTABLE JOB TITLES ===\n");
+        if self.job_titles.is_empty() {
+            out.push_str("  (none)\n");
+        } else {
+            for jt in &self.job_titles {
+                out.push_str(&format!("  • {}\n", jt.title));
+            }
+        }
+
+        out.push_str("\n=== SELECTABLE PROJECTS ===\n");
+        if self.projects.is_empty() {
+            out.push_str("  (none)\n");
+        } else {
+            for p in &self.projects {
+                if !p.tech_stack.is_empty() {
+                    out.push_str(&format!("  • {} [{}]\n", p.title, p.tech_stack.join(", ")));
+                } else {
+                    out.push_str(&format!("  • {}\n", p.title));
+                }
+            }
+        }
+
+        out.push_str("\n=== SELECTABLE EDUCATION ===\n");
+        if self.education.is_empty() {
+            out.push_str("  (none)\n");
+        } else {
+            for e in &self.education {
+                out.push_str(&format!("  • {} ({})\n", e.school, e.degree));
+            }
+        }
+
+        out.push_str("\n=== SELECTABLE EXPERIENCE & BULLETS ===\n");
+        if self.experience.is_empty() {
+            out.push_str("  (none)\n");
+        } else {
+            for exp in &self.experience {
+                out.push_str(&format!("  • {} ({})\n", exp.company, exp.role));
+                for bullet in &exp.bullets {
+                    out.push_str(&format!("    - {}\n", bullet));
+                }
+            }
+        }
+
+        out
+    }
+
+    pub fn list_items_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "status": "success",
+            "job_titles": self.job_titles.iter().map(|jt| serde_json::json!({
+                "title": jt.title,
+                "professional_summary": jt.professional_summary
+            })).collect::<Vec<_>>(),
+            "projects": self.projects.iter().map(|p| serde_json::json!({
+                "title": p.title,
+                "description": p.description,
+                "tech_stack": p.tech_stack
+            })).collect::<Vec<_>>(),
+            "education": self.education.iter().map(|e| serde_json::json!({
+                "school": e.school,
+                "degree": e.degree,
+                "status": e.status
+            })).collect::<Vec<_>>(),
+            "experience": self.experience.iter().map(|exp| serde_json::json!({
+                "company": exp.company,
+                "role": exp.role,
+                "date": exp.date,
+                "bullets": exp.bullets
+            })).collect::<Vec<_>>()
+        })
+    }
 }

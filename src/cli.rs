@@ -8,6 +8,10 @@ use clap::Parser;
     about = "CLI & TUI tool for targeted resume generation"
 )]
 pub struct Cli {
+    /// Optional command (e.g. "list")
+    #[arg(value_name = "COMMAND")]
+    pub command: Option<String>,
+
     /// Path to a Selection Preset YAML file (e.g. data/presets/job_match.yaml)
     #[arg(short, long)]
     pub preset: Option<String>,
@@ -27,6 +31,18 @@ pub struct Cli {
     /// Render initial TUI frame to stdout as ASCII text for AI inspection
     #[arg(long)]
     pub dump_screen: bool,
+
+    /// Machine-readable JSON output mode for AI agents
+    #[arg(long)]
+    pub json: bool,
+
+    /// Dry-run preset validation without compiling PDF or launching TUI
+    #[arg(short = 'c', long, alias = "check")]
+    pub validate: bool,
+
+    /// List all selectable job titles, projects, education, and experience bullets
+    #[arg(long, alias = "dump-data")]
+    pub list_items: bool,
 }
 
 pub fn dump_preset_schema() -> String {
