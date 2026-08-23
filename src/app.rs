@@ -13,6 +13,7 @@ pub enum CurrentScreen {
     ExperienceSelection,
     ExperienceBulletSelection,
     ProjectsSelection,
+    ProjectBulletSelection,
     Generating,
     Success(String), // Contains the output path
     Error(String),
@@ -35,6 +36,7 @@ pub struct App {
     pub experience_list_state: ListState,
     pub experience_bullet_list_state: ListState, // New state for bullet selection
     pub projects_list_state: ListState,
+    pub project_bullet_list_state: ListState, // State for project bullet selection
     pub job_title_list_state: ListState,
 }
 
@@ -52,6 +54,7 @@ impl App {
             experience_list_state: ListState::default(),
             experience_bullet_list_state: ListState::default(),
             projects_list_state: ListState::default(),
+            project_bullet_list_state: ListState::default(),
             job_title_list_state: ListState::default(),
         }
     }
@@ -274,6 +277,62 @@ impl App {
         }
     }
 
+    pub fn next_project_bullet(&mut self) {
+        if let Some(proj_index) = self.projects_list_state.selected() {
+            if let Some(proj) = self.data.projects.get(proj_index) {
+                if proj.bullets.is_empty() {
+                    return;
+                }
+                let i = match self.project_bullet_list_state.selected() {
+                    Some(i) => {
+                        if i >= proj.bullets.len() - 1 {
+                            0
+                        } else {
+                            i + 1
+                        }
+                    }
+                    None => 0,
+                };
+                self.project_bullet_list_state.select(Some(i));
+            }
+        }
+    }
+
+    pub fn previous_project_bullet(&mut self) {
+        if let Some(proj_index) = self.projects_list_state.selected() {
+            if let Some(proj) = self.data.projects.get(proj_index) {
+                if proj.bullets.is_empty() {
+                    return;
+                }
+                let i = match self.project_bullet_list_state.selected() {
+                    Some(i) => {
+                        if i == 0 {
+                            proj.bullets.len() - 1
+                        } else {
+                            i - 1
+                        }
+                    }
+                    None => 0,
+                };
+                self.project_bullet_list_state.select(Some(i));
+            }
+        }
+    }
+
+    pub fn toggle_project_bullet(&mut self) {
+        if let Some(proj_index) = self.projects_list_state.selected() {
+            if let Some(bullet_index) = self.project_bullet_list_state.selected() {
+                if let Some(proj) = self.data.projects.get_mut(proj_index) {
+                    if proj.hidden_bullets.contains(&bullet_index) {
+                        proj.hidden_bullets.retain(|&x| x != bullet_index);
+                    } else {
+                        proj.hidden_bullets.push(bullet_index);
+                    }
+                }
+            }
+        }
+    }
+
     pub fn handle_key_event(&mut self, key: KeyCode) {
         match &self.current_screen {
             // ─────────────────────────────────────────────────────────────
@@ -410,6 +469,16 @@ impl App {
                 KeyCode::Char('j') | KeyCode::Down => self.next_project(),
                 KeyCode::Char('k') | KeyCode::Up => self.previous_project(),
                 KeyCode::Char(' ') => self.toggle_project(),
+                KeyCode::Char('e') | KeyCode::Right => {
+                    if let Some(proj_index) = self.projects_list_state.selected() {
+                        if let Some(proj) = self.data.projects.get(proj_index) {
+                            if !proj.bullets.is_empty() {
+                                self.current_screen = CurrentScreen::ProjectBulletSelection;
+                                self.project_bullet_list_state.select(Some(0));
+                            }
+                        }
+                    }
+                }
                 KeyCode::Enter => {
                     self.current_screen = CurrentScreen::Generating;
                     match generate_pdf(&self.data) {
@@ -423,6 +492,20 @@ impl App {
                 }
                 KeyCode::Backspace => {
                     self.current_screen = CurrentScreen::ExperienceSelection;
+                }
+                _ => {}
+            },
+
+            // ─────────────────────────────────────────────────────────────
+            // Project Bullets
+            // ─────────────────────────────────────────────────────────────
+            CurrentScreen::ProjectBulletSelection => match key {
+                KeyCode::Char('q') => self.current_screen = CurrentScreen::Exiting,
+                KeyCode::Char('j') | KeyCode::Down => self.next_project_bullet(),
+                KeyCode::Char('k') | KeyCode::Up => self.previous_project_bullet(),
+                KeyCode::Char(' ') => self.toggle_project_bullet(),
+                KeyCode::Enter | KeyCode::Esc | KeyCode::Left | KeyCode::Backspace => {
+                    self.current_screen = CurrentScreen::ProjectsSelection;
                 }
                 _ => {}
             },

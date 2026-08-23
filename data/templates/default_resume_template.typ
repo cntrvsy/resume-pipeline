@@ -15,10 +15,10 @@
   job_title: "Fullstack Engineer",
   professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions using Rust, Go, and React. Strong focus on performance optimization and system architecture.",
   skills: (
-    Languages: ("TypeScript", "Rust", "Python", "SQL"),
-    "Frontend & UI": ("React", "Svelte", "Tailwind CSS"),
-    "Backend & APIs": ("Node.js", "Hono", "REST", "gRPC"),
-    "Tools & Infra": ("Docker", "Vercel", "Git", "PostgreSQL"),
+    Languages: ("Rust", "Python", "TypeScript", "SQL", "Go"),
+    "Systems & Tooling": ("Tokio", "Ratatui", "Typst Engine", "Axum", "gRPC", "Serde"),
+    "AI & Security": ("QLoRA / Unsloth", "Ollama (GGUF)", "Hugging Face", "InjecAgent"),
+    "Cloud & DevOps": ("Docker", "Linux", "GitHub Actions CI/CD", "PostgreSQL", "Redis"),
   ),
   education: (
     (school: "University of Tech", degree: "B.Sc. Computer Science", status: "Graduated May 2019"),
@@ -39,15 +39,21 @@
   projects: (
     (
       title: "Distributed Task Scheduler",
-      description: "A high-performance Go-based task scheduler capable of handling 10k+ concurrent jobs with automated retry logic.",
       tech_stack: ("Go", "gRPC", "PostgreSQL", "Docker"),
       url: "github.com/ariver/task-master",
+      bullets: (
+        "Engineered a high-throughput job queue handling 10k+ concurrent jobs with sub-50ms dispatch latency.",
+        "Implemented automated exponential-backoff retry policies and PostgreSQL transactional job persistence.",
+      ),
     ),
     (
       title: "AI Semantic Search Engine",
-      description: "Built a vector-based search interface for technical documentation using Python and Pinecone.",
-      tech_stack: ("Python", "OpenAI API", "React", "Tailwind CSS"),
+      tech_stack: ("Python", "FastAPI", "Pinecone", "React"),
       url: "search-demo.alexriver.dev",
+      bullets: (
+        "Built vector-based search interface for 50k+ technical documents using OpenAI embeddings and Pinecone.",
+        "Integrated streaming API responses and sub-100ms hybrid keyword-semantic ranking algorithms.",
+      ),
     ),
   ),
 )
@@ -119,11 +125,16 @@
 #let skills_component(skills) = {
   if skills != none and skills != (:) {
     section_title("Technical Skills")
-    let category_blocks = ()
+    v(2pt)
     for (category, items) in skills {
-      category_blocks.push([#text(weight: "bold", fill: primary_color)[#category:] #items.join(", ")])
+      grid(
+        columns: (115pt, 1fr),
+        column-gutter: 0.8em,
+        text(weight: "bold", fill: primary_color)[#category:],
+        text(fill: body_color)[#items.join(", ")],
+      )
+      v(1.5pt)
     }
-    category_blocks.join([ #text(fill: accent_color, size: 6.5pt)[#sym.bullet] ])
   }
 }
 
@@ -169,7 +180,7 @@
   }
 }
 
-#let project_item(title, description, tech_stack, url: none) = {
+#let project_item(title, tech_stack, bullets, url: none, summary: none, description: none) = {
   v(4pt)
   grid(
     columns: (1fr, auto),
@@ -177,17 +188,31 @@
     [
       #text(weight: "bold", size: 10pt, fill: primary_color)[#title]
       #if tech_stack != none and tech_stack != () [
-        #text(fill: secondary_color)[ (#tech_stack.join(", "))]
+        #text(fill: secondary_color, size: 8.5pt)[ | #tech_stack.join(", ")]
       ]
     ],
     [
-      #if url != none [ #link("https://" + url)[#text(size: 8.5pt, fill: accent_color)[#url]] ]
+      #if url != none and url != "" [ #link("https://" + url)[#text(size: 8.5pt, fill: accent_color)[#url]] ]
     ],
   )
 
-  if description != "" {
+  let final_summary = if summary != none and summary != "" { summary } else if description != none and description != "" and (bullets == none or bullets == ()) { description } else { none }
+  if final_summary != none {
     v(1pt)
-    text(fill: body_color)[#description]
+    text(fill: body_color)[#final_summary]
+  }
+
+  if bullets != none and bullets != () {
+    v(2pt)
+    set list(
+      marker: text(fill: accent_color, size: 6pt)[#sym.bullet],
+      indent: 0.8em,
+      body-indent: 0.4em,
+      spacing: 0.3em,
+    )
+    for point in bullets {
+      list.item[#point]
+    }
   }
 }
 
@@ -221,9 +246,11 @@
   #for proj in resume_data.projects [
     #project_item(
       proj.title,
-      proj.description,
-      proj.tech_stack,
+      proj.at("tech_stack", default: ()),
+      proj.at("bullets", default: ()),
       url: proj.at("url", default: none),
+      summary: proj.at("summary", default: none),
+      description: proj.at("description", default: none),
     )
   ]
 ]

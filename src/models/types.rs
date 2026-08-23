@@ -65,12 +65,20 @@ pub struct Experience {
 pub struct Project {
     pub title: String,
     pub url: Option<String>,
-    pub description: String,
+    #[serde(default)]
+    pub summary: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
     pub tech_stack: Vec<String>,
+    #[serde(default)]
+    pub bullets: Vec<String>,
 
     // UI STATE
     #[serde(skip, default = "default_true")]
     pub is_visible: bool,
+    #[serde(skip)]
+    pub hidden_bullets: Vec<usize>,
 }
 
 // Filtered version without UI state fields for Typst
@@ -141,8 +149,10 @@ impl IntoValue for Project {
         let mut dict = Dict::new();
         dict.insert("title".into(), self.title.into_value());
         dict.insert("url".into(), self.url.into_value());
+        dict.insert("summary".into(), self.summary.into_value());
         dict.insert("description".into(), self.description.into_value());
         dict.insert("tech_stack".into(), self.tech_stack.into_value());
+        dict.insert("bullets".into(), self.bullets.into_value());
         Value::Dict(dict)
     }
 }

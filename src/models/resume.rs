@@ -16,6 +16,8 @@ pub struct ResumeData {
     pub job_title: Option<String>,
     pub job_titles: Vec<JobTitle>,
     pub professional_summary: Option<String>,
+    #[serde(default)]
+    pub custom_skills: Option<std::collections::BTreeMap<String, Vec<String>>>,
 }
 
 impl ResumeData {
@@ -104,15 +106,19 @@ impl ResumeData {
         match read_yaml("projects.yaml") {
             Ok(proj_str) => {
                 if !proj_str.is_empty() {
-                    // Parse the wrapper structure
-                    let wrappers: Vec<ProjectsWrapper> =
-                        serde_yaml::from_str(&proj_str).map_err(|e| {
-                            color_eyre::eyre::eyre!("YAML Parsing Error in projects.yaml: {}", e)
-                        })?;
-
-                    // Flatten the nested structure
-                    for wrapper in wrappers {
-                        data.projects.extend(wrapper.projects);
+                    // Try direct list first, fallback to wrapper
+                    if let Ok(projects) = serde_yaml::from_str::<Vec<Project>>(&proj_str) {
+                        data.projects = projects;
+                    } else if let Ok(wrappers) =
+                        serde_yaml::from_str::<Vec<ProjectsWrapper>>(&proj_str)
+                    {
+                        for wrapper in wrappers {
+                            data.projects.extend(wrapper.projects);
+                        }
+                    } else {
+                        return Err(color_eyre::eyre::eyre!(
+                            "YAML Parsing Error in projects.yaml: Unable to parse as Vec<Project> or Vec<ProjectsWrapper>"
+                        ));
                     }
                 }
             }
@@ -171,7 +177,17 @@ impl ResumeData {
                 .projects
                 .iter()
                 .filter(|p| p.is_visible)
-                .cloned()
+                .map(|p| {
+                    let mut filtered_p = p.clone();
+                    filtered_p.bullets = p
+                        .bullets
+                        .iter()
+                        .enumerate()
+                        .filter(|(i, _)| !p.hidden_bullets.contains(i))
+                        .map(|(_, b)| b.clone())
+                        .collect();
+                    filtered_p
+                })
                 .collect(),
             job_title: self.job_title.clone().unwrap_or_else(|| " N/A".to_string()),
             professional_summary: self
@@ -179,7 +195,9 @@ impl ResumeData {
                 .clone()
                 .unwrap_or_else(|| "N/A".to_string()),
             skills: {
-                if let Some(ref title) = self.job_title {
+                if let Some(ref custom) = self.custom_skills {
+                    custom.clone()
+                } else if let Some(ref title) = self.job_title {
                     self.job_titles
                         .iter()
                         .find(|jt| &jt.title == title)
@@ -207,7 +225,7 @@ impl ResumeData {
             }
         }
 
-        out.push_str("\n=== SELECTABLE PROJECTS ===\n");
+        out.push_str("\n=== SELECTABLE PROJECTS & BULLETS ===\n");
         if self.projects.is_empty() {
             out.push_str("  (none)\n");
         } else {
@@ -216,6 +234,9 @@ impl ResumeData {
                     out.push_str(&format!("  • {} [{}]\n", p.title, p.tech_stack.join(", ")));
                 } else {
                     out.push_str(&format!("  • {}\n", p.title));
+                }
+                for bullet in &p.bullets {
+                    out.push_str(&format!("    - {}\n", bullet));
                 }
             }
         }
@@ -253,8 +274,10 @@ impl ResumeData {
             })).collect::<Vec<_>>(),
             "projects": self.projects.iter().map(|p| serde_json::json!({
                 "title": p.title,
-                "description": p.description,
-                "tech_stack": p.tech_stack
+                "url": p.url,
+                "summary": p.summary,
+                "tech_stack": p.tech_stack,
+                "bullets": p.bullets
             })).collect::<Vec<_>>(),
             "education": self.education.iter().map(|e| serde_json::json!({
                 "school": e.school,

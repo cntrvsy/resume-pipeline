@@ -55,10 +55,20 @@ job_title: "Fullstack Engineer" # Target title in data/jobtitles.yaml
 # Optional custom professional summary override
 professional_summary: "Highly skilled Software Engineer specializing in Rust and distributed systems."
 
-# List of project title substrings to include from data/projects.yaml
+# Optional custom skills override (overrides default job_title skills)
+skills:
+  Languages: ["Rust", "Python", "TypeScript", "SQL"]
+  Systems & Tooling: ["Tokio", "Ratatui", "Typst Engine", "Axum", "gRPC"]
+  AI & Security: ["QLoRA", "Ollama (GGUF)", "Hugging Face", "InjecAgent"]
+  Cloud & DevOps: ["Docker", "Linux", "GitHub Actions CI/CD"]
+
+# List of project title substrings or detailed bullet filters from data/projects.yaml
 projects:
-  - "Distributed Task Scheduler"
-  - "P2P File Transfer Protocol"
+  - "Securing SME Agent Skills" # Simple title substring match (includes all project bullets)
+  - title: "Terminal Based Resume Generator" # Detailed match with specific bullet filters
+    bullets:
+      - "high-performance"
+      - "sub-second latency"
 
 # List of education institution substrings to include from data/education.yaml
 education:

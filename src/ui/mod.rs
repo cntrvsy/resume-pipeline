@@ -8,6 +8,7 @@ mod experience_bullets;
 mod job_titles;
 mod profile;
 mod projects;
+mod project_bullets;
 mod status;
 mod welcome;
 
@@ -23,6 +24,9 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
             experience_bullets::render_experience_bullet_screen(frame, app)
         }
         CurrentScreen::ProjectsSelection => projects::render_projects_screen(frame, app),
+        CurrentScreen::ProjectBulletSelection => {
+            project_bullets::render_project_bullet_screen(frame, app)
+        }
         CurrentScreen::Generating => status::render_generating_screen(frame),
         CurrentScreen::Success(path) => status::render_success_screen(frame, path),
         CurrentScreen::Error(msg) => status::render_error_screen(frame, msg),
