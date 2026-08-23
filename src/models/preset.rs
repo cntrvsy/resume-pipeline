@@ -1,11 +1,38 @@
 use crate::models::resume::ResumeData;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ProjectFilterItem {
+    Simple(String),
+    Detailed {
+        title: String,
+        bullets: Option<Vec<String>>,
+    },
+}
+
+impl ProjectFilterItem {
+    pub fn title(&self) -> &str {
+        match self {
+            ProjectFilterItem::Simple(s) => s,
+            ProjectFilterItem::Detailed { title, .. } => title,
+        }
+    }
+
+    pub fn bullets(&self) -> Option<&Vec<String>> {
+        match self {
+            ProjectFilterItem::Simple(_) => None,
+            ProjectFilterItem::Detailed { bullets, .. } => bullets.as_ref(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SelectionPreset {
     pub job_title: Option<String>,
     pub professional_summary: Option<String>,
-    pub projects: Option<Vec<String>>,
+    pub skills: Option<std::collections::BTreeMap<String, Vec<String>>>,
+    pub projects: Option<Vec<ProjectFilterItem>>,
     pub education: Option<Vec<String>>,
     pub experience: Option<Vec<ExperienceFilter>>,
     pub profile: Option<ProfileFilter>,
@@ -29,6 +56,12 @@ pub struct UnmatchedBullet {
     pub query: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct UnmatchedProjectBullet {
+    pub project: String,
+    pub query: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ValidationReport {
     pub matched_job_title: Option<String>,
@@ -37,6 +70,9 @@ pub struct ValidationReport {
     pub matched_projects: Vec<String>,
     pub total_projects_requested: usize,
     pub unmatched_projects: Vec<String>,
+    pub matched_project_bullets: usize,
+    pub total_project_bullets_requested: usize,
+    pub unmatched_project_bullets: Vec<UnmatchedProjectBullet>,
     pub matched_education: Vec<String>,
     pub total_education_requested: usize,
     pub unmatched_education: Vec<String>,
@@ -51,6 +87,7 @@ impl ValidationReport {
     pub fn has_unmatched(&self) -> bool {
         self.unmatched_job_title.is_some()
             || !self.unmatched_projects.is_empty()
+            || !self.unmatched_project_bullets.is_empty()
             || !self.unmatched_education.is_empty()
             || !self.unmatched_companies.is_empty()
             || !self.unmatched_bullets.is_empty()
@@ -79,6 +116,16 @@ impl ValidationReport {
             );
             for un in &self.unmatched_projects {
                 println!("│  ✗ Project unmatched: \"{}\"", un);
+            }
+        }
+
+        if self.total_project_bullets_requested > 0 {
+            println!(
+                "│  ✓ Project Bullets: {}/{} keyword matches",
+                self.matched_project_bullets, self.total_project_bullets_requested
+            );
+            for un_b in &self.unmatched_project_bullets {
+                println!("│  ✗ Project Bullet unmatched: [{}] \"{}\"", un_b.project, un_b.query);
             }
         }
 
@@ -137,6 +184,11 @@ impl ValidationReport {
                     "matched_items": self.matched_projects,
                     "missing": self.unmatched_projects
                 },
+                "project_bullets": {
+                    "requested": self.total_project_bullets_requested,
+                    "matched": self.matched_project_bullets,
+                    "missing": self.unmatched_project_bullets
+                },
                 "education": {
                     "requested": self.total_education_requested,
                     "matched": self.matched_education.len(),
@@ -186,32 +238,82 @@ impl ResumeData {
             }
         }
 
+        // 1b. Skills Override
+        if let Some(ref custom_skills) = preset.skills {
+            self.custom_skills = Some(custom_skills.clone());
+        }
+
         // 2. Projects Matching
         if let Some(ref req_projects) = preset.projects {
             report.total_projects_requested = req_projects.len();
             for proj in &mut self.projects {
-                let proj_title_lower = proj.title.to_lowercase();
-                let matched = req_projects.iter().any(|req| {
-                    let req_lower = req.to_lowercase();
-                    proj_title_lower.contains(&req_lower) || req_lower.contains(&proj_title_lower)
-                });
-                proj.is_visible = matched;
-                if matched && !report.matched_projects.contains(&proj.title) {
-                    report.matched_projects.push(proj.title.clone());
-                }
+                proj.is_visible = false;
             }
 
-            for req in req_projects {
-                let req_lower = req.to_lowercase();
-                let exists = self.projects.iter().any(|p| {
+            for req_proj in req_projects {
+                let req_title = req_proj.title();
+                let req_lower = req_title.to_lowercase();
+                let mut matched_any = false;
+
+                for proj in self.projects.iter_mut().filter(|p| {
                     let p_lower = p.title.to_lowercase();
                     p_lower.contains(&req_lower) || req_lower.contains(&p_lower)
-                });
-                if !exists {
-                    report.unmatched_projects.push(req.clone());
+                }) {
+                    matched_any = true;
+                    proj.is_visible = true;
+
+                    if let Some(req_bullets) = req_proj.bullets() {
+                        let mut hidden = Vec::new();
+                        for (idx, bullet_text) in proj.bullets.iter().enumerate() {
+                            let bullet_lower = bullet_text.to_lowercase();
+                            let is_matched = req_bullets
+                                .iter()
+                                .any(|req| bullet_lower.contains(&req.to_lowercase()));
+                            if !is_matched {
+                                hidden.push(idx);
+                            }
+                        }
+                        proj.hidden_bullets = hidden;
+                    }
+                }
+
+                if matched_any {
+                    if !report.matched_projects.contains(&req_title.to_string()) {
+                        report.matched_projects.push(req_title.to_string());
+                    }
+                } else {
+                    report.unmatched_projects.push(req_title.to_string());
                     report
                         .warnings
-                        .push(format!("Project '{}' not found in projects.yaml", req));
+                        .push(format!("Project '{}' not found in projects.yaml", req_title));
+                }
+
+                if let Some(req_bullets) = req_proj.bullets() {
+                    report.total_project_bullets_requested += req_bullets.len();
+                    for req_bullet in req_bullets {
+                        let req_b_lower = req_bullet.to_lowercase();
+                        let matched_bullet = self
+                            .projects
+                            .iter()
+                            .filter(|p| {
+                                let p_lower = p.title.to_lowercase();
+                                p_lower.contains(&req_lower) || req_lower.contains(&p_lower)
+                            })
+                            .any(|p| {
+                                p.bullets
+                                    .iter()
+                                    .any(|b| b.to_lowercase().contains(&req_b_lower))
+                            });
+
+                        if matched_bullet {
+                            report.matched_project_bullets += 1;
+                        } else {
+                            report.unmatched_project_bullets.push(UnmatchedProjectBullet {
+                                project: req_title.to_string(),
+                                query: req_bullet.clone(),
+                            });
+                        }
+                    }
                 }
             }
         }

@@ -105,10 +105,13 @@ fn create_mock_app() -> App {
 
     app.data.projects.push(Project {
         title: "Project 1".to_string(),
-        url: None,
-        description: "Desc".to_string(),
+        url: Some("github.com/example/proj1".to_string()),
+        summary: None,
+        description: None,
         tech_stack: vec!["Rust".to_string()],
+        bullets: vec!["Engineered core parser".to_string(), "Reduced memory usage".to_string()],
         is_visible: true,
+        hidden_bullets: vec![],
     });
 
     app
@@ -376,6 +379,32 @@ fn test_skills_propagation() {
 }
 
 #[test]
+fn test_preset_custom_skills_override() {
+    let mut app = create_mock_app();
+    let mut custom_skills = std::collections::BTreeMap::new();
+    custom_skills.insert(
+        "AI & Security".to_string(),
+        vec!["QLoRA".to_string(), "InjecAgent".to_string()],
+    );
+
+    let preset = crate::models::SelectionPreset {
+        job_title: Some("Software Engineer".to_string()),
+        skills: Some(custom_skills),
+        ..Default::default()
+    };
+
+    app.data.apply_preset(&preset);
+    let filtered = app.data.to_filtered_data();
+
+    assert!(filtered.skills.contains_key("AI & Security"));
+    assert_eq!(
+        filtered.skills.get("AI & Security").unwrap(),
+        &vec!["QLoRA".to_string(), "InjecAgent".to_string()]
+    );
+    assert!(!filtered.skills.contains_key("Languages"));
+}
+
+#[test]
 fn test_pdf_generation() {
     let mut app = create_mock_app();
     app.data.job_title = Some("Software Engineer".to_string());
@@ -389,7 +418,10 @@ fn test_preset_application_and_validation() {
     let preset = crate::models::SelectionPreset {
         job_title: Some("Software Engineer".to_string()),
         professional_summary: Some("Tailored summary test".to_string()),
-        projects: Some(vec!["Project 1".to_string()]),
+        skills: None,
+        projects: Some(vec![crate::models::ProjectFilterItem::Simple(
+            "Project 1".to_string(),
+        )]),
         education: Some(vec!["Test Uni".to_string()]),
         experience: Some(vec![crate::models::ExperienceFilter {
             company: "Corp".to_string(),
@@ -411,6 +443,46 @@ fn test_preset_application_and_validation() {
 }
 
 #[test]
+fn test_project_detailed_preset_matching() {
+    let mut app = create_mock_app();
+    let preset = crate::models::SelectionPreset {
+        projects: Some(vec![crate::models::ProjectFilterItem::Detailed {
+            title: "Project 1".to_string(),
+            bullets: Some(vec!["Reduced memory usage".to_string()]),
+        }]),
+        ..Default::default()
+    };
+
+    let report = app.data.apply_preset(&preset);
+
+    assert_eq!(report.matched_projects, vec!["Project 1".to_string()]);
+    assert_eq!(report.matched_project_bullets, 1);
+    assert_eq!(report.total_project_bullets_requested, 1);
+    assert_eq!(app.data.projects[0].hidden_bullets, vec![0]); // Bullet 0 "Engineered core parser" hidden
+}
+
+#[test]
+fn test_project_bullet_toggles() {
+    let mut app = create_mock_app();
+    app.current_screen = CurrentScreen::ProjectsSelection;
+    app.projects_list_state.select(Some(0));
+
+    // Press 'e' to enter bullet selection
+    app.handle_key_event(KeyCode::Char('e'));
+    assert_eq!(app.current_screen, CurrentScreen::ProjectBulletSelection);
+    assert_eq!(app.project_bullet_list_state.selected(), Some(0));
+
+    // Toggle first bullet
+    assert!(!app.data.projects[0].hidden_bullets.contains(&0));
+    app.handle_key_event(KeyCode::Char(' '));
+    assert!(app.data.projects[0].hidden_bullets.contains(&0));
+
+    // Return back to ProjectsSelection
+    app.handle_key_event(KeyCode::Enter);
+    assert_eq!(app.current_screen, CurrentScreen::ProjectsSelection);
+}
+
+#[test]
 fn test_preset_dump_schema() {
     let schema = crate::cli::dump_preset_schema();
     assert!(schema.contains("job_title:"));
@@ -423,7 +495,9 @@ fn test_unmatched_diagnostics_and_json_report() {
     let mut app = create_mock_app();
     let preset = crate::models::SelectionPreset {
         job_title: Some("Nonexistent Title".to_string()),
-        projects: Some(vec!["Nonexistent Project".to_string()]),
+        projects: Some(vec![crate::models::ProjectFilterItem::Simple(
+            "Nonexistent Project".to_string(),
+        )]),
         education: Some(vec!["Nonexistent School".to_string()]),
         experience: Some(vec![crate::models::ExperienceFilter {
             company: "FooBar Baz Inc".to_string(),
@@ -459,13 +533,15 @@ fn test_data_item_listing() {
     let text = app.data.list_items_text();
     assert!(text.contains("=== SELECTABLE JOB TITLES ==="));
     assert!(text.contains("Software Engineer"));
-    assert!(text.contains("=== SELECTABLE PROJECTS ==="));
+    assert!(text.contains("=== SELECTABLE PROJECTS & BULLETS ==="));
     assert!(text.contains("Project 1"));
+    assert!(text.contains("Engineered core parser"));
 
     let json = app.data.list_items_json();
     assert_eq!(json["status"], "success");
     assert_eq!(json["job_titles"][0]["title"], "Software Engineer");
     assert_eq!(json["projects"][0]["title"], "Project 1");
+    assert_eq!(json["projects"][0]["bullets"][0], "Engineered core parser");
 }
 
 #[test]

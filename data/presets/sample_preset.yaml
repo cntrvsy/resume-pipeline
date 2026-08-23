@@ -1,8 +1,12 @@
 job_title: "Fullstack Engineer"
-professional_summary: "Highly skilled Software Engineer specializing in Rust APIs and modern web applications."
+professional_summary: "Highly skilled Software Engineer specializing in Rust APIs, SLM fine-tuning, and developer tooling."
 
 projects:
-  - "Resume TUI Generator"
+  - "Securing SME Agent Skills"
+  - title: "Terminal Based Resume Generator"
+    bullets:
+      - "high-performance"
+      - "sub-second latency"
 
 education:
   - "school name"

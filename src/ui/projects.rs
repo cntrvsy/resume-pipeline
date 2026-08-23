@@ -16,7 +16,7 @@ pub fn render_projects_screen(frame: &mut Frame, app: &mut App) {
     ])
     .split(frame.area());
 
-    let header_text = "Step 4: Select Projects | Navigate: j/k | Toggle: <Space>";
+    let header_text = "Step 4: Select Projects | Navigate: j/k | Toggle: <Space> | Edit Bullets: <e>";
     let header = Paragraph::new(header_text).block(Block::bordered().title(" Projects "));
     frame.render_widget(header, chunks[0]);
 
@@ -31,7 +31,18 @@ pub fn render_projects_screen(frame: &mut Frame, app: &mut App) {
             .iter()
             .map(|proj| {
                 let status = if proj.is_visible { "[x] " } else { "[ ] " };
-                let content = format!("{}{}", status, proj.title);
+                let tech = if !proj.tech_stack.is_empty() {
+                    format!(" [{}]", proj.tech_stack.join(", "))
+                } else {
+                    "".to_string()
+                };
+                let bullets_info = if !proj.bullets.is_empty() {
+                    let visible_count = proj.bullets.len() - proj.hidden_bullets.len();
+                    format!(" ({} of {} bullets)", visible_count, proj.bullets.len())
+                } else {
+                    "".to_string()
+                };
+                let content = format!("{}{}{}{}", status, proj.title, tech, bullets_info);
                 ListItem::new(Line::from(content))
             })
             .collect()
@@ -50,6 +61,8 @@ pub fn render_projects_screen(frame: &mut Frame, app: &mut App) {
             Style::default().bg(Color::Yellow).fg(Color::Black),
         ),
         Span::raw(" Back    "),
+        Span::styled(" <e> ", Style::default().bg(Color::Cyan).fg(Color::Black)),
+        Span::raw(" Edit Bullets    "),
         Span::styled(
             " <Enter> ",
             Style::default().bg(Color::Magenta).fg(Color::White),

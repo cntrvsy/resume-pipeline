@@ -1,39 +1,47 @@
 - title: "Fullstack Engineer"
   professional_summary: "Highly skilled Software Engineer with 5+ years of experience in full-stack development. Proven ability to design and implement scalable solutions using Rust, Go, and React. Strong focus on performance optimization and system architecture."
   skills:
-    Languages: ["TypeScript", "Rust", "Python", "SQL"]
-    Frontend & UI: ["React", "Svelte", "Tailwind CSS"]
-    Backend & APIs: ["Node.js", "Hono", "REST", "gRPC"]
-    Tools & Infra: ["Docker", "Vercel", "Git", "PostgreSQL"]
+    Languages: ["Rust", "Python", "TypeScript", "SQL", "Go"]
+    Systems & Backend: ["Tokio", "Axum", "Node.js", "Hono", "gRPC", "Protobuf"]
+    Frontend & UI: ["React", "Svelte", "Tailwind CSS", "Next.js"]
+    Data & Cloud: ["PostgreSQL", "Redis", "Docker", "Linux", "CI/CD"]
 
-- title: "Data Analyst"
-  professional_summary: "Data analyst specializing in interactive business intelligence dashboards, automated SQL data pipelines, and quantitative insights driving strategic decision-making."
+- title: "Rust & AI Systems Engineer"
+  professional_summary: "Systems and AI Engineer specializing in low-latency CLI/TUI developer tooling in Rust and fine-tuned SLM security proxies for agentic workflows."
   skills:
-    Languages & Querying: ["SQL", "Python"]
-    BI & Visualization: ["PowerBI", "Tableau"]
-    Data Libraries: ["pandas", "NumPy", "ClickHouse"]
-    Tools & Cloud: ["Git", "Excel", "PostgreSQL"]
+    Languages: ["Rust", "Python", "TypeScript", "SQL", "C++"]
+    Systems & Tooling: ["Tokio", "Ratatui", "Typst Engine", "Axum", "gRPC", "Serde"]
+    AI & Security: ["QLoRA / Unsloth", "4-bit SLMs", "Ollama (GGUF)", "Hugging Face", "InjecAgent", "IPI Sanitization"]
+    Infra & DevOps: ["Docker", "Linux", "GitHub Actions CI/CD", "PostgreSQL", "Redis"]
 
 - title: "Rust Developer"
-  professional_summary: "Detail-oriented Backend Developer specializing in building robust, high-performance APIs and microservices. Expert in database design (PostgreSQL, MongoDB) and message brokers (Kafka, RabbitMQ) to handle large-scale data processing."
+  professional_summary: "Detail-oriented Systems Developer specializing in building robust, high-performance APIs and CLI engines in Rust. Expert in asynchronous runtime management, database architecture, and message brokers."
   skills:
-    Languages: ["Rust", "C++", "SQL"]
-    Backend & Systems: ["Tokio", "Axum", "gRPC", "Protobuf"]
-    Databases & Queues: ["PostgreSQL", "Redis", "Kafka", "MongoDB"]
-    Tools & DevOps: ["Docker", "Linux", "Git", "CI/CD"]
+    Languages: ["Rust", "C++", "SQL", "Python"]
+    Systems & Architecture: ["Tokio", "Axum", "Ratatui", "Typst Engine", "gRPC", "Protobuf", "Serde"]
+    Databases & Storage: ["PostgreSQL", "Redis", "Kafka", "ClickHouse"]
+    DevOps & Environment: ["Docker", "Linux", "CI/CD (GitHub Actions)", "Git"]
 
 - title: "Frontend Specialist"
   professional_summary: "Innovative Frontend Architect with a passion for creating intuitive and responsive user interfaces. Extensive experience with modern JavaScript frameworks (Svelte, Next.js) and a deep understanding of web performance, accessibility, and modern CSS."
   skills:
-    Languages: ["TypeScript", "JavaScript", "HTML5", "CSS3"]
-    Frameworks: ["React", "Svelte", "Next.js"]
-    State & Styling: ["Redux", "Tailwind CSS", "CSS Modules"]
-    Tools & Testing: ["Vite", "Jest", "Cypress", "Git"]
+    Languages: ["TypeScript", "JavaScript", "SQL"]
+    Frameworks & Runtimes: ["React", "Next.js", "Svelte", "Vite"]
+    UI & Design Systems: ["Tailwind CSS", "Modern CSS", "Web Components", "A11y"]
+    Architecture & Testing: ["State Machines", "Jest", "Playwright", "Docker", "CI/CD"]
 
 - title: "DevOps Engineer"
   professional_summary: "Enthusiastic and results-driven Technical Lead. Adept at managing cross-functional teams to deliver high-quality software products on time. Experienced in cloud-native architectures, containerization (Docker, Kubernetes), and CI/CD pipelines."
   skills:
-    Cloud & Infra: ["AWS", "Kubernetes", "Docker", "Terraform"]
-    CI/CD & Scripting: ["GitHub Actions", "Python", "Bash"]
-    Monitoring & Logging: ["Prometheus", "Grafana", "ELK Stack"]
-    Networking & Security: ["Nginx", "Linux", "IAM", "TLS"]
+    Cloud & Infrastructure: ["AWS", "Kubernetes", "Docker", "Terraform", "Linux"]
+    CI/CD & Automation: ["GitHub Actions", "Python", "Bash", "ArgoCD"]
+    Observability & Metrics: ["Prometheus", "Grafana", "OpenTelemetry", "ELK Stack"]
+    Networking & Security: ["Nginx", "TLS / PKI", "IAM", "VPC Architecture"]
+
+- title: "Data Analyst"
+  professional_summary: "Data analyst specializing in interactive business intelligence dashboards, automated SQL data pipelines, and quantitative insights driving strategic decision-making."
+  skills:
+    Languages & Querying: ["SQL", "Python", "Bash"]
+    Data Engineering & DBs: ["ClickHouse", "PostgreSQL", "pandas", "NumPy"]
+    BI & Visualization: ["PowerBI", "Tableau", "Metabase"]
+    Workflows & Tools: ["Git", "Docker", "Automated ETL Pipelines"]
