@@ -20,7 +20,7 @@ clap = { version = "4.5", features = ["derive"] }
 typst = "0.12.0"       # Core compiler
 typst-pdf = "0.12.0"   # PDF exporter
 time = "0.3"           # Required for the 'World' environment
-comemo = "0.4"         # Typst's caching system
+comemo = "0.5"         # Typst's caching system
 bytes = "1.0"          # For handling embedded font buffers
 
 # Remove typst-as-lib
