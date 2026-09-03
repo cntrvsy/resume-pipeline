@@ -111,7 +111,40 @@ fn main() -> Result<()> {
 
     // 6. Non-Interactive Export Mode
     if let Some(ref export_path_arg) = cli.export {
-        let pdf_path = pdf::generate_pdf_with_export(&app.data, Some(export_path_arg))?;
+        let doc_mode = cli.doc.to_lowercase();
+        let has_cover_letter = app.data.cover_letter.is_some();
+
+        let should_export_resume = match doc_mode.as_str() {
+            "cover-letter" => false,
+            _ => true,
+        };
+
+        let should_export_cover_letter = match doc_mode.as_str() {
+            "cover-letter" | "both" => true,
+            "resume" => false,
+            _ => has_cover_letter, // "auto"
+        };
+
+        if doc_mode == "cover-letter" && !has_cover_letter {
+            return Err(color_eyre::eyre::eyre!(
+                "Document type 'cover-letter' was requested, but no cover_letter was found in the preset."
+            ));
+        }
+
+        let mut generated_paths = Vec::new();
+
+        if should_export_resume {
+            let resume_path = pdf::generate_pdf_with_export(&app.data, Some(export_path_arg))?;
+            generated_paths.push(("Resume", resume_path));
+        }
+
+        if should_export_cover_letter {
+            if let Some(ref cl) = app.data.cover_letter {
+                let cl_path = pdf::generate_cover_letter_pdf(&app.data, cl, Some(export_path_arg))?;
+                generated_paths.push(("Cover Letter", cl_path));
+            }
+        }
+
         let report = report_opt.unwrap_or_default();
         let status = if report.has_unmatched() {
             "warning"
@@ -119,16 +152,27 @@ fn main() -> Result<()> {
             "success"
         };
 
+        let primary_path = generated_paths.first().map(|(_, p)| p.as_str());
+
         if cli.json {
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&report.to_json_value(status, Some(&pdf_path)))?
-            );
+            let mut json_val = report.to_json_value(status, primary_path);
+            if let Some(obj) = json_val.as_object_mut() {
+                obj.insert(
+                    "exported_documents".to_string(),
+                    serde_json::json!(generated_paths
+                        .iter()
+                        .map(|(doc_type, path)| serde_json::json!({ "type": doc_type, "path": path }))
+                        .collect::<Vec<_>>()),
+                );
+            }
+            println!("{}", serde_json::to_string_pretty(&json_val)?);
         } else {
             if cli.preset.is_some() {
                 report.print_summary();
             }
-            println!("Successfully generated resume PDF at: {}", pdf_path);
+            for (doc_type, path) in &generated_paths {
+                println!("Successfully generated {} PDF at: {}", doc_type, path);
+            }
         }
         return Ok(());
     }

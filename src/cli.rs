@@ -24,6 +24,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub export: Option<String>,
 
+    /// Document type to export: "resume", "cover-letter", or "both" (default: "auto", exports both if cover_letter is present)
+    #[arg(long, value_name = "TYPE", default_value = "auto")]
+    pub doc: String,
+
     /// Dump machine-readable YAML preset schema for AI discovery
     #[arg(long)]
     pub dump_schema: bool,
@@ -85,6 +89,21 @@ experience:
 profile:
   show_email: true
   show_phone: true
+
+# Optional tailored cover letter block (Omit entirely if not required for application)
+cover_letter:
+  company: "CloudScale Systems" # Target company name
+  recipient: "Platform Engineering Team" # Specific team or hiring manager name (optional)
+  date: "auto" # "auto" dynamically resolves today's date (or specify e.g. "September 2026")
+  address: # Optional company address lines
+    - "100 Innovation Way"
+    - "San Francisco, CA"
+  subject: "Application for Senior Distributed Systems Engineer" # Optional subject line override
+  paragraphs: # 3-4 concise, non-cliche paragraphs (250-320 words total)
+    - "When I read about CloudScale's ongoing migration to event-driven architectures, it immediately resonated with my background in high-throughput backend services..."
+    - "At my previous role, I led the cache invalidation initiative using Redis and Tokio, reducing 99th-percentile tail latency by 40%..."
+    - "I'd welcome the chance to discuss how my hands-on background in Rust and infrastructure reliability can support your team's roadmap."
+  sign_off: "Sincerely," # Optional sign-off greeting (defaults to "Sincerely,")
 "#
     .to_string()
 }
