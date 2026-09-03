@@ -1,4 +1,5 @@
 use crate::models::resume::ResumeData;
+use crate::models::types::CoverLetterPreset;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,6 +37,7 @@ pub struct SelectionPreset {
     pub education: Option<Vec<String>>,
     pub experience: Option<Vec<ExperienceFilter>>,
     pub profile: Option<ProfileFilter>,
+    pub cover_letter: Option<CoverLetterPreset>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -80,6 +82,7 @@ pub struct ValidationReport {
     pub total_bullets_requested: usize,
     pub unmatched_companies: Vec<String>,
     pub unmatched_bullets: Vec<UnmatchedBullet>,
+    pub cover_letter_company: Option<String>,
     pub warnings: Vec<String>,
 }
 
@@ -158,6 +161,10 @@ impl ValidationReport {
             }
         }
 
+        if let Some(ref company) = self.cover_letter_company {
+            println!("│  ✓ Cover Letter: Included for \"{}\"", company);
+        }
+
         if !self.warnings.is_empty() {
             println!("├─────────────────────────────────────────────────────────────────┤");
             for warning in &self.warnings {
@@ -202,6 +209,10 @@ impl ValidationReport {
                     "requested": self.total_bullets_requested,
                     "matched": self.matched_bullets,
                     "missing": self.unmatched_bullets
+                },
+                "cover_letter": {
+                    "included": self.cover_letter_company.is_some(),
+                    "company": self.cover_letter_company
                 },
                 "warnings": self.warnings
             }
@@ -440,6 +451,12 @@ impl ResumeData {
                     prof.show_phone = show;
                 }
             }
+        }
+
+        // 6. Cover Letter
+        self.cover_letter = preset.cover_letter.clone();
+        if let Some(ref cl) = preset.cover_letter {
+            report.cover_letter_company = Some(cl.company.clone());
         }
 
         report

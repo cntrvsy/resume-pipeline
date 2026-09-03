@@ -1,6 +1,6 @@
 use super::types::{
-    Education, EducationWrapper, Experience, FilteredResumeData, JobTitle, Profile, Project,
-    ProjectsWrapper,
+    CoverLetterPreset, Education, EducationWrapper, Experience, FilteredResumeData, JobTitle,
+    Profile, Project, ProjectsWrapper,
 };
 use color_eyre::Result;
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,7 @@ pub struct ResumeData {
     pub professional_summary: Option<String>,
     #[serde(default)]
     pub custom_skills: Option<std::collections::BTreeMap<String, Vec<String>>>,
+    pub cover_letter: Option<CoverLetterPreset>,
 }
 
 impl ResumeData {

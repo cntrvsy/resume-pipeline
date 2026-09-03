@@ -33,6 +33,18 @@ pub struct JobTitle {
     pub skills: Option<std::collections::BTreeMap<String, Vec<String>>>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct CoverLetterPreset {
+    pub company: String,
+    pub recipient: Option<String>,
+    pub date: Option<String>,
+    pub address: Option<Vec<String>>,
+    pub subject: Option<String>,
+    #[serde(default)]
+    pub paragraphs: Vec<String>,
+    pub sign_off: Option<String>,
+}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Education {
@@ -177,6 +189,36 @@ impl From<FilteredResumeData> for Dict {
         dict.insert("skills".into(), Value::Dict(skills_dict));
 
         dict
+    }
+}
+
+impl IntoValue for CoverLetterPreset {
+    fn into_value(self) -> Value {
+        let mut dict = Dict::new();
+        dict.insert("company".into(), self.company.into_value());
+        dict.insert(
+            "recipient".into(),
+            self.recipient
+                .unwrap_or_else(|| "Hiring Team".to_string())
+                .into_value(),
+        );
+        dict.insert("date".into(), self.date.unwrap_or_default().into_value());
+        dict.insert(
+            "address".into(),
+            self.address.unwrap_or_default().into_value(),
+        );
+        dict.insert(
+            "subject".into(),
+            self.subject.unwrap_or_default().into_value(),
+        );
+        dict.insert("paragraphs".into(), self.paragraphs.into_value());
+        dict.insert(
+            "sign_off".into(),
+            self.sign_off
+                .unwrap_or_else(|| "Sincerely,".to_string())
+                .into_value(),
+        );
+        Value::Dict(dict)
     }
 }
 

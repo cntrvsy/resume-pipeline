@@ -431,6 +431,7 @@ fn test_preset_application_and_validation() {
             show_email: Some(false),
             show_phone: Some(true),
         }),
+        ..Default::default()
     };
 
     let report = app.data.apply_preset(&preset);
@@ -559,6 +560,45 @@ fn test_custom_export_path() {
     let _ = std::fs::remove_file(custom_target);
 }
 
+#[test]
+fn test_preset_schema_includes_cover_letter() {
+    let schema = crate::cli::dump_preset_schema();
+    assert!(schema.contains("cover_letter:"));
+    assert!(schema.contains("company:"));
+    assert!(schema.contains("paragraphs:"));
+}
 
+#[test]
+fn test_cover_letter_preset_application_and_export() {
+    let mut app = create_mock_app();
+    let preset = crate::models::SelectionPreset {
+        job_title: Some("Software Engineer".to_string()),
+        cover_letter: Some(crate::models::types::CoverLetterPreset {
+            company: "Acme Corp".to_string(),
+            recipient: Some("Engineering Hiring Team".to_string()),
+            date: Some("auto".to_string()),
+            address: Some(vec!["San Francisco, CA".to_string()]),
+            subject: Some("Application for Software Engineer".to_string()),
+            paragraphs: vec![
+                "I am excited to apply for the Software Engineer role.".to_string(),
+                "At my previous job, I solved latency bottlenecks with Redis.".to_string(),
+            ],
+            sign_off: Some("Best regards,".to_string()),
+        }),
+        ..Default::default()
+    };
 
+    let report = app.data.apply_preset(&preset);
+    assert_eq!(report.cover_letter_company, Some("Acme Corp".to_string()));
+    assert!(app.data.cover_letter.is_some());
 
+    let cl = app.data.cover_letter.as_ref().unwrap();
+    let export_result = crate::pdf::generate_cover_letter_pdf(&app.data, cl, Some("data/output/test_cover_letter.pdf"));
+    assert!(export_result.is_ok(), "Cover letter generation failed: {:?}", export_result.err());
+
+    let output_file = export_result.unwrap();
+    assert!(std::path::Path::new(&output_file).exists());
+
+    // Cleanup
+    let _ = std::fs::remove_file(&output_file);
+}

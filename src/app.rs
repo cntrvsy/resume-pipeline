@@ -483,7 +483,22 @@ impl App {
                     self.current_screen = CurrentScreen::Generating;
                     match generate_pdf(&self.data) {
                         Ok(path) => {
-                            self.current_screen = CurrentScreen::Success(path);
+                            if let Some(ref cl) = self.data.cover_letter {
+                                match crate::pdf::generate_cover_letter_pdf(&self.data, cl, None) {
+                                    Ok(cl_path) => {
+                                        self.current_screen = CurrentScreen::Success(format!(
+                                            "Resume: {}\nCover Letter: {}",
+                                            path, cl_path
+                                        ));
+                                    }
+                                    Err(e) => {
+                                        self.current_screen =
+                                            CurrentScreen::Error(format!("Cover letter export error: {}", e));
+                                    }
+                                }
+                            } else {
+                                self.current_screen = CurrentScreen::Success(path);
+                            }
                         }
                         Err(e) => {
                             self.current_screen = CurrentScreen::Error(format!("{}", e));
