@@ -55,29 +55,32 @@
 #set par(leading: 0.55em, justify: false)
 
 // 2. HEADER COMPONENT (Matching Resume Header)
-#let contact_items = ()
-if profile.at("phone", default: "") != "" { contact_items.push(profile.phone) }
-if profile.at("email", default: "") != "" { contact_items.push(link("mailto:" + profile.email)[#profile.email]) }
-if profile.at("url", default: "") != "" { contact_items.push(link("https://" + profile.url)[#profile.url]) }
-if profile.at("website", default: "") != "" { contact_items.push(link("https://" + profile.website)[#profile.website]) }
-if profile.at("location", default: "") != "" { contact_items.push(profile.location) }
-if profile.at("citizenship", default: "") != "" { contact_items.push(profile.citizenship) }
+#let header_component(profile, job_title) = {
+  let contact_items = ()
+  if profile.at("phone", default: "") != "" { contact_items.push(profile.phone) }
+  if profile.at("email", default: "") != "" { contact_items.push(link("mailto:" + profile.email)[#profile.email]) }
+  if profile.at("url", default: "") != "" { contact_items.push(link("https://" + profile.url)[#profile.url]) }
+  if profile.at("website", default: "") != "" { contact_items.push(link("https://" + profile.website)[#profile.website]) }
+  if profile.at("location", default: "") != "" { contact_items.push(profile.location) }
+  if profile.at("citizenship", default: "") != "" { contact_items.push(profile.citizenship) }
 
-#align(center)[
-  #text(size: 22pt, weight: "bold", fill: primary_color)[#profile.name] \
-  #v(3pt)
-  #if job_title != "" and job_title != "N/A" [
-    #text(size: 11pt, weight: "semibold", fill: accent_color, tracking: 0.03em)[#job_title] \
-    #v(4pt)
+  align(center)[
+    #text(size: 22pt, weight: "bold", fill: primary_color)[#profile.name] \
+    #v(3pt)
+    #if job_title != "" and job_title != "N/A" [
+      #text(size: 11pt, weight: "semibold", fill: accent_color, tracking: 0.03em)[#job_title] \
+      #v(4pt)
+    ]
+    #text(size: 8.5pt, fill: secondary_color)[
+      #contact_items.join("  |  ")
+    ]
   ]
-  #text(size: 8.5pt, fill: secondary_color)[
-    #contact_items.join("  |  ")
-  ]
-]
+  v(6pt)
+  line(length: 100%, stroke: 0.6pt + rgb("#d1d5db"))
+  v(10pt)
+}
 
-#v(6pt)
-#line(length: 100%, stroke: 0.6pt + rgb("#d1d5db"))
-#v(10pt)
+#header_component(profile, job_title)
 
 // 3. RECIPIENT & METADATA SECTION
 #grid(
