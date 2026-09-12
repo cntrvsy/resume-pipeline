@@ -19,6 +19,8 @@ pub struct ResumeData {
     #[serde(default)]
     pub custom_skills: Option<std::collections::BTreeMap<String, Vec<String>>>,
     pub cover_letter: Option<CoverLetterPreset>,
+    pub target_company: Option<String>,
+    pub layout: Option<crate::models::types::LayoutConfig>,
 }
 
 impl ResumeData {
@@ -211,6 +213,8 @@ impl ResumeData {
                         .unwrap_or_default()
                 }
             },
+            section_order: self.layout.as_ref().and_then(|l| l.resolved_section_order()),
+            target_company: self.target_company.clone(),
         }
     }
 

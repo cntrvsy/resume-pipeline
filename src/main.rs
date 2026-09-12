@@ -67,9 +67,34 @@ fn main() -> Result<()> {
         app.data.job_title = Some(job_title.clone());
     }
 
+    if let Some(ref company) = cli.company {
+        app.data.target_company = Some(company.clone());
+        if let Some(ref mut rep) = report_opt {
+            rep.target_company = Some(company.clone());
+        }
+    }
+
     // 4. Dry-Run / Validation Flag (--validate / --check)
     if cli.validate {
-        let report = report_opt.unwrap_or_default();
+        let mut report = report_opt.unwrap_or_default();
+        if let Ok(telemetry) = pdf::inspect_layout(&app.data, cli.max_pages) {
+            if telemetry.resume_overflow {
+                report.warnings.push(format!(
+                    "Resume page count ({}) exceeds maximum limit ({})",
+                    telemetry.resume_pages,
+                    telemetry.max_resume_pages.unwrap_or(telemetry.resume_pages)
+                ));
+            }
+            if telemetry.cover_letter_overflow {
+                report.warnings.push(format!(
+                    "Cover Letter page count ({}) exceeds maximum limit ({})",
+                    telemetry.cover_letter_pages.unwrap_or(1),
+                    telemetry.max_cover_letter_pages.unwrap_or(1)
+                ));
+            }
+            report.layout_telemetry = Some(telemetry);
+        }
+
         let status = if report.has_unmatched() {
             "failed"
         } else {
@@ -145,7 +170,11 @@ fn main() -> Result<()> {
             }
         }
 
-        let report = report_opt.unwrap_or_default();
+        let mut report = report_opt.unwrap_or_default();
+        if let Ok(telemetry) = pdf::inspect_layout(&app.data, cli.max_pages) {
+            report.layout_telemetry = Some(telemetry);
+        }
+
         let status = if report.has_unmatched() {
             "warning"
         } else {
@@ -170,8 +199,19 @@ fn main() -> Result<()> {
             if cli.preset.is_some() {
                 report.print_summary();
             }
-            for (doc_type, path) in &generated_paths {
-                println!("Successfully generated {} PDF at: {}", doc_type, path);
+            if let Some(ref lt) = report.layout_telemetry {
+                for (doc_type, path) in &generated_paths {
+                    let page_info = match *doc_type {
+                        "Resume" => format!(" ({} page{})", lt.resume_pages, if lt.resume_pages == 1 { "" } else { "s" }),
+                        "Cover Letter" => lt.cover_letter_pages.map(|p| format!(" ({} page{})", p, if p == 1 { "" } else { "s" })).unwrap_or_default(),
+                        _ => String::new(),
+                    };
+                    println!("Successfully generated {} PDF at: {}{}", doc_type, path, page_info);
+                }
+            } else {
+                for (doc_type, path) in &generated_paths {
+                    println!("Successfully generated {} PDF at: {}", doc_type, path);
+                }
             }
         }
         return Ok(());

@@ -93,6 +93,34 @@ pub struct Project {
     pub hidden_bullets: Vec<usize>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct LayoutConfig {
+    #[serde(default)]
+    pub section_order: Option<Vec<String>>,
+    #[serde(default)]
+    pub sections: Option<Vec<String>>,
+    #[serde(default)]
+    pub max_pages: Option<usize>,
+    #[serde(default)]
+    pub max_resume_pages: Option<usize>,
+    #[serde(default)]
+    pub max_cover_letter_pages: Option<usize>,
+}
+
+impl LayoutConfig {
+    pub fn resolved_section_order(&self) -> Option<Vec<String>> {
+        self.section_order.clone().or_else(|| self.sections.clone())
+    }
+
+    pub fn resolved_max_resume_pages(&self) -> Option<usize> {
+        self.max_resume_pages.or(self.max_pages)
+    }
+
+    pub fn resolved_max_cover_letter_pages(&self) -> Option<usize> {
+        self.max_cover_letter_pages
+    }
+}
+
 // Filtered version without UI state fields for Typst
 #[derive(Debug, Clone, Serialize)]
 pub struct FilteredResumeData {
@@ -103,6 +131,8 @@ pub struct FilteredResumeData {
     pub job_title: String,
     pub professional_summary: String,
     pub skills: std::collections::BTreeMap<String, Vec<String>>,
+    pub section_order: Option<Vec<String>>,
+    pub target_company: Option<String>,
 }
 
 // Wrapper for education YAML parsing
@@ -181,6 +211,13 @@ impl From<FilteredResumeData> for Dict {
             "professional_summary".into(),
             val.professional_summary.into_value(),
         );
+
+        if let Some(order) = val.section_order {
+            dict.insert("section_order".into(), order.into_value());
+        }
+        if let Some(company) = val.target_company {
+            dict.insert("target_company".into(), company.into_value());
+        }
 
         let mut skills_dict = Dict::new();
         for (category, skill_list) in val.skills {

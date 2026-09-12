@@ -20,6 +20,14 @@ pub struct Cli {
     #[arg(short, long)]
     pub job: Option<String>,
 
+    /// Quick target company override (included in PDF filenames, e.g. "CloudScale Systems")
+    #[arg(long)]
+    pub company: Option<String>,
+
+    /// Enforce maximum page budget constraint for the resume during validation (e.g. 1 or 2)
+    #[arg(long, value_name = "PAGES")]
+    pub max_pages: Option<usize>,
+
     /// Non-interactive export: path or directory to save compiled PDF
     #[arg(short, long)]
     pub export: Option<String>,
@@ -54,6 +62,9 @@ pub fn dump_preset_schema() -> String {
 # Use this schema when generating tailored selection presets from job descriptions.
 # Note: Item selection uses substring matching against data/*.yaml master files.
 
+# Target company name (included in PDF filenames to avoid collisions/overwrites across applications)
+target_company: "CloudScale Systems"
+
 job_title: "Fullstack Engineer" # Target title in data/jobtitles.yaml
 
 # Optional custom professional summary override
@@ -66,7 +77,16 @@ skills:
   AI & Security: ["QLoRA", "Ollama (GGUF)", "Hugging Face", "InjecAgent"]
   Cloud & DevOps: ["Docker", "Linux", "GitHub Actions CI/CD"]
 
+# Optional layout and page-budget configuration
+layout:
+  section_order: ["summary", "skills", "experience", "projects", "education"] # Can include "pagebreak"
+  max_pages: 2 # Maximum target page count for resume validation (e.g. 1 or 2)
+
 # List of project title substrings or detailed bullet filters from data/projects.yaml
+# NOTE on Project Ordering & Content:
+# - Projects are rendered in the EXACT order they appear in this preset list.
+# - If 'bullets' is omitted, all master project bullets are rendered (or project 'description' if bullets are empty).
+# - If specific 'bullets' are listed, ONLY those matching bullets are rendered (suppressing 'description').
 projects:
   - "Securing SME Agent Skills" # Simple title substring match (includes all project bullets)
   - title: "Terminal Based Resume Generator" # Detailed match with specific bullet filters

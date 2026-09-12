@@ -114,13 +114,13 @@
   }
 }
 
-#let section_title(title) = {
-  v(10pt)
-  text(size: 10.5pt, weight: "bold", fill: accent_color, tracking: 0.04em)[#upper(title)]
-  v(2pt)
-  line(length: 100%, stroke: 0.6pt + rgb("#d1d5db"))
-  v(4pt)
-}
+#let section_title(title) = block(breakable: false, width: 100%)[
+  #v(10pt)
+  #text(size: 10.5pt, weight: "bold", fill: accent_color, tracking: 0.04em)[#upper(title)]
+  #v(2pt)
+  #line(length: 100%, stroke: 0.6pt + rgb("#d1d5db"))
+  #v(4pt)
+]
 
 #let skills_component(skills) = {
   if skills != none and skills != (:) {
@@ -138,18 +138,18 @@
   }
 }
 
-#let edu_item(degree, school, status) = {
-  grid(
+#let edu_item(degree, school, status) = block(breakable: false, width: 100%)[
+  #grid(
     columns: (1fr, auto),
     column-gutter: 1.5em,
     [#text(weight: "bold", fill: primary_color)[#school] #if degree != "" [— #text(fill: body_color)[#degree]]],
     text(fill: secondary_color)[#status],
   )
-}
+]
 
-#let work_item(role, company, location, date, summary, highlights, url: none) = {
-  v(4pt)
-  grid(
+#let work_item(role, company, location, date, summary, highlights, url: none) = block(breakable: false, width: 100%)[
+  #v(4pt)
+  #grid(
     columns: (1fr, auto),
     column-gutter: 1.5em,
     [
@@ -161,12 +161,12 @@
     text(weight: "medium", fill: secondary_color)[#date],
   )
 
-  if summary != "" {
+  #if summary != "" {
     v(1pt)
     text(fill: body_color)[#summary]
   }
 
-  if highlights != none and highlights != () {
+  #if highlights != none and highlights != () {
     v(2pt)
     set list(
       marker: text(fill: accent_color, size: 6pt)[#sym.bullet],
@@ -178,11 +178,11 @@
       list.item[#point]
     }
   }
-}
+]
 
-#let project_item(title, tech_stack, bullets, url: none, summary: none, description: none) = {
-  v(4pt)
-  grid(
+#let project_item(title, tech_stack, bullets, url: none, summary: none, description: none) = block(breakable: false, width: 100%)[
+  #v(4pt)
+  #grid(
     columns: (1fr, auto),
     column-gutter: 1.5em,
     [
@@ -196,13 +196,13 @@
     ],
   )
 
-  let final_summary = if summary != none and summary != "" { summary } else if description != none and description != "" and (bullets == none or bullets == ()) { description } else { none }
-  if final_summary != none {
+  #let final_summary = if summary != none and summary != "" { summary } else if description != none and description != "" and (bullets == none or bullets == ()) { description } else { none }
+  #if final_summary != none {
     v(1pt)
     text(fill: body_color)[#final_summary]
   }
 
-  if bullets != none and bullets != () {
+  #if bullets != none and bullets != () {
     v(2pt)
     set list(
       marker: text(fill: accent_color, size: 6pt)[#sym.bullet],
@@ -214,7 +214,7 @@
       list.item[#point]
     }
   }
-}
+]
 
 // 3. RENDER
 
@@ -223,41 +223,55 @@
   resume_data.at("job_title", default: "Software Engineer"),
 )
 
-#summary_component(resume_data.at("professional_summary", default: ""))
+#let render_section(sec_name) = {
+  let name = lower(sec_name)
+  if name == "summary" or name == "professional_summary" {
+    summary_component(resume_data.at("professional_summary", default: ""))
+  } else if name == "skills" or name == "technical_skills" {
+    skills_component(resume_data.at("skills", default: none))
+  } else if name == "experience" or name == "work_experience" {
+    if resume_data.at("experience", default: ()) != () [
+      #section_title("Work Experience")
+      #for job in resume_data.experience [
+        #work_item(
+          job.role,
+          job.company,
+          job.location,
+          job.date,
+          job.summary,
+          job.bullets,
+        )
+      ]
+    ]
+  } else if name == "projects" {
+    if resume_data.at("projects", default: ()) != () [
+      #section_title("Projects")
+      #for proj in resume_data.projects [
+        #project_item(
+          proj.title,
+          proj.at("tech_stack", default: ()),
+          proj.at("bullets", default: ()),
+          url: proj.at("url", default: none),
+          summary: proj.at("summary", default: none),
+          description: proj.at("description", default: none),
+        )
+      ]
+    ]
+  } else if name == "education" {
+    if resume_data.at("education", default: ()) != () [
+      #section_title("Education")
+      #for edu in resume_data.education [
+        #edu_item(edu.degree, edu.school, edu.status)
+      ]
+    ]
+  } else if name == "pagebreak" {
+    pagebreak()
+  }
+}
 
-#skills_component(resume_data.at("skills", default: none))
+#let default_section_order = ("summary", "skills", "experience", "projects", "education")
+#let active_sections = resume_data.at("section_order", default: default_section_order)
 
-#if resume_data.at("experience", default: ()) != () [
-  #section_title("Work Experience")
-  #for job in resume_data.experience [
-    #work_item(
-      job.role,
-      job.company,
-      job.location,
-      job.date,
-      job.summary,
-      job.bullets,
-    )
-  ]
-]
-
-#if resume_data.at("projects", default: ()) != () [
-  #section_title("Projects")
-  #for proj in resume_data.projects [
-    #project_item(
-      proj.title,
-      proj.at("tech_stack", default: ()),
-      proj.at("bullets", default: ()),
-      url: proj.at("url", default: none),
-      summary: proj.at("summary", default: none),
-      description: proj.at("description", default: none),
-    )
-  ]
-]
-
-#if resume_data.at("education", default: ()) != () [
-  #section_title("Education")
-  #for edu in resume_data.education [
-    #edu_item(edu.degree, edu.school, edu.status)
-  ]
+#for sec in active_sections [
+  #render_section(sec)
 ]
