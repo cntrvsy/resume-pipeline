@@ -602,3 +602,143 @@ fn test_cover_letter_preset_application_and_export() {
     // Cleanup
     let _ = std::fs::remove_file(&output_file);
 }
+
+#[test]
+fn test_company_in_resume_filename() {
+    let mut app = create_mock_app();
+    app.data.job_title = Some("Fullstack Engineer".to_string());
+    app.data.target_company = Some("CloudScale Systems".to_string());
+
+    // Generate PDF to data/output/ (no custom export path override)
+    let pdf_path = crate::pdf::generate_pdf_with_export(&app.data, None);
+    assert!(pdf_path.is_ok(), "PDF generation failed: {:?}", pdf_path.err());
+    let path_str = pdf_path.unwrap();
+
+    assert!(path_str.contains("CloudScale Systems"));
+    assert!(path_str.contains("Test User - CloudScale Systems - Fullstack Engineer"));
+    assert!(std::path::Path::new(&path_str).exists());
+
+    // Cleanup
+    let _ = std::fs::remove_file(&path_str);
+}
+
+#[test]
+fn test_preset_project_order_preserved() {
+    let mut app = create_mock_app();
+    app.data.projects.push(crate::models::types::Project {
+        title: "Project 2".to_string(),
+        url: None,
+        summary: None,
+        description: None,
+        tech_stack: vec!["Python".to_string()],
+        bullets: vec!["Deployed microservice".to_string()],
+        is_visible: true,
+        hidden_bullets: vec![],
+    });
+
+    // Mock app now has Project 1 at index 0, Project 2 at index 1
+    assert_eq!(app.data.projects[0].title, "Project 1");
+    assert_eq!(app.data.projects[1].title, "Project 2");
+
+    let preset = crate::models::SelectionPreset {
+        projects: Some(vec![
+            crate::models::ProjectFilterItem::Simple("Project 2".to_string()),
+            crate::models::ProjectFilterItem::Simple("Project 1".to_string()),
+        ]),
+        ..Default::default()
+    };
+
+    let report = app.data.apply_preset(&preset);
+    assert_eq!(report.matched_projects.len(), 2);
+
+    let filtered = app.data.to_filtered_data();
+    assert_eq!(filtered.projects.len(), 2);
+    // Project 2 should now come FIRST because it was listed first in the preset
+    assert_eq!(filtered.projects[0].title, "Project 2");
+    assert_eq!(filtered.projects[1].title, "Project 1");
+}
+
+#[test]
+fn test_preset_education_order_preserved() {
+    let mut app = create_mock_app();
+    assert_eq!(app.data.education[0].school, "Test Uni");
+    assert_eq!(app.data.education[1].school, "Test Uni 2");
+
+    let preset = crate::models::SelectionPreset {
+        education: Some(vec!["Test Uni 2".to_string(), "Test Uni".to_string()]),
+        ..Default::default()
+    };
+
+    let report = app.data.apply_preset(&preset);
+    assert_eq!(report.matched_education.len(), 2);
+
+    let filtered = app.data.to_filtered_data();
+    assert_eq!(filtered.education.len(), 2);
+    // Test Uni 2 should now come FIRST
+    assert_eq!(filtered.education[0].school, "Test Uni 2");
+    assert_eq!(filtered.education[1].school, "Test Uni");
+}
+
+#[test]
+fn test_layout_telemetry_and_page_budget_enforcement() {
+    let mut app = create_mock_app();
+    app.data.job_title = Some("Software Engineer".to_string());
+
+    // Test inspect_layout directly
+    let telemetry_res = crate::pdf::inspect_layout(&app.data, Some(10));
+    assert!(telemetry_res.is_ok(), "Layout inspection failed: {:?}", telemetry_res.err());
+    let telemetry = telemetry_res.unwrap();
+    assert!(telemetry.resume_pages >= 1);
+    assert_eq!(telemetry.max_resume_pages, Some(10));
+    assert!(!telemetry.resume_overflow);
+
+    // Test overflow detection with max_pages: 0
+    let overflow_res = crate::pdf::inspect_layout(&app.data, Some(0));
+    assert!(overflow_res.is_ok());
+    let overflow_telemetry = overflow_res.unwrap();
+    assert!(overflow_telemetry.resume_overflow);
+    assert!(overflow_telemetry.has_overflow());
+
+    // Test integration into ValidationReport
+    let mut report = crate::models::ValidationReport::default();
+    report.layout_telemetry = Some(overflow_telemetry);
+    assert!(report.has_unmatched()); // Layout overflow should trigger failure
+}
+
+#[test]
+fn test_layout_section_ordering_and_pagebreak() {
+    let mut app = create_mock_app();
+    let preset = crate::models::SelectionPreset {
+        layout: Some(crate::models::types::LayoutConfig {
+            section_order: Some(vec![
+                "skills".to_string(),
+                "pagebreak".to_string(),
+                "projects".to_string(),
+                "education".to_string(),
+            ]),
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+
+    app.data.apply_preset(&preset);
+    let filtered = app.data.to_filtered_data();
+    assert!(filtered.section_order.is_some());
+    let order = filtered.section_order.as_ref().unwrap();
+    assert_eq!(order, &vec!["skills", "pagebreak", "projects", "education"]);
+
+    // Test conversion to Typst Dict
+    use typst::foundations::Dict;
+    let dict: Dict = filtered.into();
+    assert!(dict.get("section_order").is_ok());
+}
+
+#[test]
+fn test_preset_schema_includes_company_layout_and_notes() {
+    let schema = crate::cli::dump_preset_schema();
+    assert!(schema.contains("target_company:"));
+    assert!(schema.contains("layout:"));
+    assert!(schema.contains("section_order:"));
+    assert!(schema.contains("max_pages:"));
+    assert!(schema.contains("NOTE on Project Ordering & Content:"));
+}

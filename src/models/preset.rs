@@ -30,6 +30,8 @@ impl ProjectFilterItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SelectionPreset {
+    #[serde(default, alias = "company")]
+    pub target_company: Option<String>,
     pub job_title: Option<String>,
     pub professional_summary: Option<String>,
     pub skills: Option<std::collections::BTreeMap<String, Vec<String>>>,
@@ -38,6 +40,7 @@ pub struct SelectionPreset {
     pub experience: Option<Vec<ExperienceFilter>>,
     pub profile: Option<ProfileFilter>,
     pub cover_letter: Option<CoverLetterPreset>,
+    pub layout: Option<crate::models::types::LayoutConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -64,6 +67,22 @@ pub struct UnmatchedProjectBullet {
     pub query: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct LayoutTelemetry {
+    pub resume_pages: usize,
+    pub cover_letter_pages: Option<usize>,
+    pub max_resume_pages: Option<usize>,
+    pub max_cover_letter_pages: Option<usize>,
+    pub resume_overflow: bool,
+    pub cover_letter_overflow: bool,
+}
+
+impl LayoutTelemetry {
+    pub fn has_overflow(&self) -> bool {
+        self.resume_overflow || self.cover_letter_overflow
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ValidationReport {
     pub matched_job_title: Option<String>,
@@ -83,6 +102,8 @@ pub struct ValidationReport {
     pub unmatched_companies: Vec<String>,
     pub unmatched_bullets: Vec<UnmatchedBullet>,
     pub cover_letter_company: Option<String>,
+    pub target_company: Option<String>,
+    pub layout_telemetry: Option<LayoutTelemetry>,
     pub warnings: Vec<String>,
 }
 
@@ -94,6 +115,7 @@ impl ValidationReport {
             || !self.unmatched_education.is_empty()
             || !self.unmatched_companies.is_empty()
             || !self.unmatched_bullets.is_empty()
+            || self.layout_telemetry.as_ref().map_or(false, |lt| lt.has_overflow())
     }
 
     pub fn print_summary(&self) {
@@ -104,6 +126,10 @@ impl ValidationReport {
             println!("│  ✗ Job Title unmatched: \"{}\"", req_title);
         } else {
             println!("│  ⚠ Job Title: Not specified");
+        }
+
+        if let Some(ref comp) = self.target_company {
+            println!("│  ✓ Target Company: {}", comp);
         }
 
         if self.total_projects_requested > 0 {
@@ -165,6 +191,29 @@ impl ValidationReport {
             println!("│  ✓ Cover Letter: Included for \"{}\"", company);
         }
 
+        if let Some(ref lt) = self.layout_telemetry {
+            let mut layout_parts = Vec::new();
+            let resume_info = match lt.max_resume_pages {
+                Some(max) => format!("Resume: {} page(s) (Limit: {})", lt.resume_pages, max),
+                None => format!("Resume: {} page(s)", lt.resume_pages),
+            };
+            layout_parts.push(resume_info);
+
+            if let Some(cl_pages) = lt.cover_letter_pages {
+                let cl_info = match lt.max_cover_letter_pages {
+                    Some(max) => format!("Cover Letter: {} page(s) (Limit: {})", cl_pages, max),
+                    None => format!("Cover Letter: {} page(s)", cl_pages),
+                };
+                layout_parts.push(cl_info);
+            }
+
+            if lt.has_overflow() {
+                println!("│  ✗ Layout Overflow: {}", layout_parts.join(" | "));
+            } else {
+                println!("│  ✓ Layout: {}", layout_parts.join(" | "));
+            }
+        }
+
         if !self.warnings.is_empty() {
             println!("├─────────────────────────────────────────────────────────────────┤");
             for warning in &self.warnings {
@@ -175,54 +224,96 @@ impl ValidationReport {
     }
 
     pub fn to_json_value(&self, status: &str, output_path: Option<&str>) -> serde_json::Value {
+        let mut validation_obj = serde_json::json!({
+            "job_title": {
+                "matched": self.matched_job_title.is_some(),
+                "requested": self.requested_job_title,
+                "selected": self.matched_job_title,
+                "unmatched": self.unmatched_job_title
+            },
+            "projects": {
+                "requested": self.total_projects_requested,
+                "matched": self.matched_projects.len(),
+                "matched_items": self.matched_projects,
+                "missing": self.unmatched_projects
+            },
+            "project_bullets": {
+                "requested": self.total_project_bullets_requested,
+                "matched": self.matched_project_bullets,
+                "missing": self.unmatched_project_bullets
+            },
+            "education": {
+                "requested": self.total_education_requested,
+                "matched": self.matched_education.len(),
+                "matched_items": self.matched_education,
+                "missing": self.unmatched_education
+            },
+            "experience": {
+                "missing_companies": self.unmatched_companies
+            },
+            "experience_bullets": {
+                "requested": self.total_bullets_requested,
+                "matched": self.matched_bullets,
+                "missing": self.unmatched_bullets
+            },
+            "cover_letter": {
+                "included": self.cover_letter_company.is_some(),
+                "company": self.cover_letter_company
+            },
+            "target_company": self.target_company,
+            "warnings": self.warnings
+        });
+
+        if let Some(ref lt) = self.layout_telemetry {
+            if let Some(obj) = validation_obj.as_object_mut() {
+                obj.insert(
+                    "layout".to_string(),
+                    serde_json::json!({
+                        "resume_pages": lt.resume_pages,
+                        "cover_letter_pages": lt.cover_letter_pages,
+                        "max_resume_pages": lt.max_resume_pages,
+                        "max_cover_letter_pages": lt.max_cover_letter_pages,
+                        "resume_overflow": lt.resume_overflow,
+                        "cover_letter_overflow": lt.cover_letter_overflow,
+                        "status": if lt.has_overflow() { "overflow" } else { "ok" }
+                    }),
+                );
+            }
+        }
+
         serde_json::json!({
             "status": status,
             "output_path": output_path,
-            "validation": {
-                "job_title": {
-                    "matched": self.matched_job_title.is_some(),
-                    "requested": self.requested_job_title,
-                    "selected": self.matched_job_title,
-                    "unmatched": self.unmatched_job_title
-                },
-                "projects": {
-                    "requested": self.total_projects_requested,
-                    "matched": self.matched_projects.len(),
-                    "matched_items": self.matched_projects,
-                    "missing": self.unmatched_projects
-                },
-                "project_bullets": {
-                    "requested": self.total_project_bullets_requested,
-                    "matched": self.matched_project_bullets,
-                    "missing": self.unmatched_project_bullets
-                },
-                "education": {
-                    "requested": self.total_education_requested,
-                    "matched": self.matched_education.len(),
-                    "matched_items": self.matched_education,
-                    "missing": self.unmatched_education
-                },
-                "experience": {
-                    "missing_companies": self.unmatched_companies
-                },
-                "experience_bullets": {
-                    "requested": self.total_bullets_requested,
-                    "matched": self.matched_bullets,
-                    "missing": self.unmatched_bullets
-                },
-                "cover_letter": {
-                    "included": self.cover_letter_company.is_some(),
-                    "company": self.cover_letter_company
-                },
-                "warnings": self.warnings
-            }
+            "validation": validation_obj
         })
+    }
+}
+
+fn match_score(target: &str, query: &str) -> Option<u8> {
+    let t = target.to_lowercase();
+    let q = query.to_lowercase();
+    if t == q {
+        Some(3)
+    } else if t.contains(&q) {
+        Some(2)
+    } else if q.contains(&t) {
+        Some(1)
+    } else {
+        None
     }
 }
 
 impl ResumeData {
     pub fn apply_preset(&mut self, preset: &SelectionPreset) -> ValidationReport {
         let mut report = ValidationReport::default();
+
+        // 0. Target Company & Layout
+        self.target_company = preset
+            .target_company
+            .clone()
+            .or_else(|| preset.cover_letter.as_ref().map(|cl| cl.company.clone()));
+        report.target_company = self.target_company.clone();
+        self.layout = preset.layout.clone();
 
         // 1. Job Title & Professional Summary
         if let Some(ref target_title) = preset.job_title {
@@ -254,37 +345,53 @@ impl ResumeData {
             self.custom_skills = Some(custom_skills.clone());
         }
 
-        // 2. Projects Matching
+        // 2. Projects Matching (Preserving Preset Order)
         if let Some(ref req_projects) = preset.projects {
             report.total_projects_requested = req_projects.len();
             for proj in &mut self.projects {
                 proj.is_visible = false;
             }
 
+            let mut ordered_projects = Vec::new();
+            let mut matched_indices = std::collections::HashSet::new();
+
             for req_proj in req_projects {
                 let req_title = req_proj.title();
-                let req_lower = req_title.to_lowercase();
+                let mut max_score = 0;
+                for proj in self.projects.iter() {
+                    if let Some(s) = match_score(&proj.title, req_title) {
+                        if s > max_score {
+                            max_score = s;
+                        }
+                    }
+                }
+
                 let mut matched_any = false;
+                if max_score > 0 {
+                    for (idx, proj) in self.projects.iter_mut().enumerate() {
+                        if match_score(&proj.title, req_title) == Some(max_score) {
+                            matched_any = true;
+                            proj.is_visible = true;
 
-                for proj in self.projects.iter_mut().filter(|p| {
-                    let p_lower = p.title.to_lowercase();
-                    p_lower.contains(&req_lower) || req_lower.contains(&p_lower)
-                }) {
-                    matched_any = true;
-                    proj.is_visible = true;
+                            if let Some(req_bullets) = req_proj.bullets() {
+                                let mut hidden = Vec::new();
+                                for (b_idx, bullet_text) in proj.bullets.iter().enumerate() {
+                                    let bullet_lower = bullet_text.to_lowercase();
+                                    let is_matched = req_bullets
+                                        .iter()
+                                        .any(|req| bullet_lower.contains(&req.to_lowercase()));
+                                    if !is_matched {
+                                        hidden.push(b_idx);
+                                    }
+                                }
+                                proj.hidden_bullets = hidden;
+                            }
 
-                    if let Some(req_bullets) = req_proj.bullets() {
-                        let mut hidden = Vec::new();
-                        for (idx, bullet_text) in proj.bullets.iter().enumerate() {
-                            let bullet_lower = bullet_text.to_lowercase();
-                            let is_matched = req_bullets
-                                .iter()
-                                .any(|req| bullet_lower.contains(&req.to_lowercase()));
-                            if !is_matched {
-                                hidden.push(idx);
+                            if !matched_indices.contains(&idx) {
+                                matched_indices.insert(idx);
+                                ordered_projects.push(proj.clone());
                             }
                         }
-                        proj.hidden_bullets = hidden;
                     }
                 }
 
@@ -306,10 +413,7 @@ impl ResumeData {
                         let matched_bullet = self
                             .projects
                             .iter()
-                            .filter(|p| {
-                                let p_lower = p.title.to_lowercase();
-                                p_lower.contains(&req_lower) || req_lower.contains(&p_lower)
-                            })
+                            .filter(|p| match_score(&p.title, req_title).is_some())
                             .any(|p| {
                                 p.bullets
                                     .iter()
@@ -327,36 +431,67 @@ impl ResumeData {
                     }
                 }
             }
+
+            for (idx, proj) in self.projects.iter().enumerate() {
+                if !matched_indices.contains(&idx) {
+                    ordered_projects.push(proj.clone());
+                }
+            }
+            self.projects = ordered_projects;
         }
 
-        // 3. Education Matching
+        // 3. Education Matching (Preserving Preset Order)
         if let Some(ref req_edu) = preset.education {
             report.total_education_requested = req_edu.len();
             for edu in &mut self.education {
-                let school_lower = edu.school.to_lowercase();
-                let matched = req_edu.iter().any(|req| {
-                    let req_lower = req.to_lowercase();
-                    school_lower.contains(&req_lower) || req_lower.contains(&school_lower)
-                });
-                edu.is_visible = matched;
-                if matched && !report.matched_education.contains(&edu.school) {
-                    report.matched_education.push(edu.school.clone());
-                }
+                edu.is_visible = false;
             }
 
+            let mut ordered_education = Vec::new();
+            let mut matched_indices = std::collections::HashSet::new();
+
             for req in req_edu {
-                let req_lower = req.to_lowercase();
-                let exists = self.education.iter().any(|e| {
-                    let s_lower = e.school.to_lowercase();
-                    s_lower.contains(&req_lower) || req_lower.contains(&s_lower)
-                });
-                if !exists {
+                let mut max_score = 0;
+                for edu in self.education.iter() {
+                    if let Some(s) = match_score(&edu.school, req) {
+                        if s > max_score {
+                            max_score = s;
+                        }
+                    }
+                }
+
+                let mut matched_any = false;
+                if max_score > 0 {
+                    for (idx, edu) in self.education.iter_mut().enumerate() {
+                        if match_score(&edu.school, req) == Some(max_score) {
+                            matched_any = true;
+                            edu.is_visible = true;
+                            if !matched_indices.contains(&idx) {
+                                matched_indices.insert(idx);
+                                ordered_education.push(edu.clone());
+                            }
+                        }
+                    }
+                }
+
+                if matched_any {
+                    if !report.matched_education.contains(req) {
+                        report.matched_education.push(req.clone());
+                    }
+                } else {
                     report.unmatched_education.push(req.clone());
                     report
                         .warnings
                         .push(format!("Education '{}' not found in education.yaml", req));
                 }
             }
+
+            for (idx, edu) in self.education.iter().enumerate() {
+                if !matched_indices.contains(&idx) {
+                    ordered_education.push(edu.clone());
+                }
+            }
+            self.education = ordered_education;
         }
 
         // 4. Experience & Bullet Substring Matching

@@ -1,6 +1,6 @@
 use color_eyre::Result;
 use std::fs;
-use typst::foundations::Dict;
+use typst::foundations::{Dict, IntoValue};
 use typst_pdf::PdfOptions;
 
 use crate::models::ResumeData;
@@ -75,8 +75,6 @@ pub fn generate_pdf_with_export(data: &ResumeData, export_target: Option<&str>) 
         .map_err(|e| color_eyre::eyre::eyre!("PDF Export Error: {:?}", e))?;
 
     // --- Generate dynamic filename ---
-    let mut filename_parts = Vec::new();
-
     // 1. First and Last Name
     let user_name = data
         .profile
@@ -85,40 +83,67 @@ pub fn generate_pdf_with_export(data: &ResumeData, export_target: Option<&str>) 
         .unwrap_or_default();
 
     let name_parts: Vec<&str> = user_name.split_whitespace().collect();
-    if !name_parts.is_empty() {
+    let name_str = if !name_parts.is_empty() {
         let first_name = name_parts[0];
         let last_name = *name_parts.last().unwrap_or(&"");
         if first_name == last_name {
-            filename_parts.push(first_name.to_string());
+            first_name.to_string()
         } else {
-            filename_parts.push(format!("{} {}", first_name, last_name));
+            format!("{} {}", first_name, last_name)
         }
-    }
+    } else {
+        String::new()
+    };
 
-    // 2. Job Title
-    if let Some(ref title) = data.job_title {
-        let trimmed_title = title.trim();
-        if !trimmed_title.is_empty() && trimmed_title != "N/A" {
-            // Sanitize title to remove slashes which break file paths
-            let sanitized_title = trimmed_title.replace('/', "-").replace('\\', "-");
-            filename_parts.push(sanitized_title);
+    // 2. Company Name (from target_company or cover_letter)
+    let company_opt = data
+        .target_company
+        .as_ref()
+        .or_else(|| data.cover_letter.as_ref().map(|cl| &cl.company))
+        .map(|c| c.trim().replace('/', "-").replace('\\', "-"))
+        .filter(|c| !c.is_empty());
+
+    // 3. Job Title
+    let title_str = if let Some(ref title) = data.job_title {
+        let trimmed = title.trim();
+        if !trimmed.is_empty() && trimmed != "N/A" {
+            Some(trimmed.replace('/', "-").replace('\\', "-"))
+        } else {
+            None
         }
-    }
+    } else {
+        None
+    };
 
-    // 3. Current Year
+    // 4. Current Year
     let current_year = get_current_year();
-    filename_parts.push(current_year.to_string());
 
-    let mut base_filename = filename_parts.join(" ");
+    let default_filename = if let Some(company) = company_opt {
+        // When company is present: "<First Last> - <Company> - <Job Title> <Year>.pdf"
+        let role = title_str.unwrap_or_else(|| "Resume".to_string());
+        if !name_str.is_empty() {
+            format!("{} - {} - {} {}.pdf", name_str, company, role, current_year)
+        } else {
+            format!("{} - {} {}.pdf", company, role, current_year)
+        }
+    } else {
+        // Fallback if no company is specified: "<First Last> <Job Title> <Year>.pdf"
+        let mut parts = Vec::new();
+        if !name_str.is_empty() {
+            parts.push(name_str);
+        }
+        if let Some(title) = title_str {
+            parts.push(title);
+        }
+        parts.push(current_year.to_string());
 
-    // Fallback if empty or something went wrong (only contains year)
-    if base_filename.trim().is_empty() || filename_parts.len() == 1 {
-        base_filename = "resume".to_string();
-    }
-
-    // Final sanitization of the whole base filename just in case
-    let safe_filename = base_filename.replace('/', "-").replace('\\', "-");
-    let default_filename = format!("{}.pdf", safe_filename);
+        let mut base_filename = parts.join(" ");
+        if base_filename.trim().is_empty() || parts.len() == 1 {
+            base_filename = "resume".to_string();
+        }
+        let safe_filename = base_filename.replace('/', "-").replace('\\', "-");
+        format!("{}.pdf", safe_filename)
+    };
 
     let final_output_path: PathBuf = if let Some(target) = export_target {
         let path = Path::new(target);
@@ -222,8 +247,6 @@ pub fn generate_cover_letter_pdf(
     let pdf_data = typst_pdf::pdf(&document, &PdfOptions::default())
         .map_err(|e| color_eyre::eyre::eyre!("Cover Letter PDF Export Error: {:?}", e))?;
 
-    let mut filename_parts = Vec::new();
-
     let user_name = data
         .profile
         .as_ref()
@@ -231,15 +254,17 @@ pub fn generate_cover_letter_pdf(
         .unwrap_or_default();
 
     let name_parts: Vec<&str> = user_name.split_whitespace().collect();
-    if !name_parts.is_empty() {
+    let name_str = if !name_parts.is_empty() {
         let first_name = name_parts[0];
         let last_name = *name_parts.last().unwrap_or(&"");
         if first_name == last_name {
-            filename_parts.push(first_name.to_string());
+            first_name.to_string()
         } else {
-            filename_parts.push(format!("{} {}", first_name, last_name));
+            format!("{} {}", first_name, last_name)
         }
-    }
+    } else {
+        String::new()
+    };
 
     let company_sanitized = cover_letter
         .company
@@ -247,15 +272,21 @@ pub fn generate_cover_letter_pdf(
         .replace('/', "-")
         .replace('\\', "-");
 
-    if !company_sanitized.is_empty() {
-        filename_parts.push(company_sanitized);
-    }
+    let current_year = get_current_year();
 
-    filename_parts.push("Cover Letter".to_string());
-    filename_parts.push(get_current_year().to_string());
-
-    let safe_filename = filename_parts.join(" - ").replace('/', "-").replace('\\', "-");
-    let default_filename = format!("{}.pdf", safe_filename);
+    let default_filename = if !company_sanitized.is_empty() {
+        if !name_str.is_empty() {
+            format!("{} - {} - Cover Letter {}.pdf", name_str, company_sanitized, current_year)
+        } else {
+            format!("{} - Cover Letter {}.pdf", company_sanitized, current_year)
+        }
+    } else {
+        if !name_str.is_empty() {
+            format!("{} - Cover Letter {}.pdf", name_str, current_year)
+        } else {
+            format!("Cover Letter {}.pdf", current_year)
+        }
+    };
 
     let final_output_path: PathBuf = if let Some(target) = export_target {
         let path = Path::new(target);
@@ -300,4 +331,88 @@ pub fn generate_cover_letter_pdf(
     fs::write(&final_output_path, pdf_data)?;
 
     Ok(final_output_path.to_string_lossy().to_string())
+}
+
+pub fn inspect_layout(
+    data: &ResumeData,
+    cli_max_pages: Option<usize>,
+) -> Result<crate::models::preset::LayoutTelemetry> {
+    let current_dir = std::env::current_dir()?;
+    let template_path = current_dir
+        .join("data")
+        .join("templates")
+        .join("default_resume_template.typ");
+
+    if !template_path.exists() {
+        return Err(color_eyre::eyre::eyre!(
+            "Template file not found at: {:?}.\nPlease ensure 'default_resume_template.typ' exists in data/templates/.",
+            template_path
+        ));
+    }
+
+    let template_content = fs::read_to_string(&template_path)?;
+    let filtered_data = data.to_filtered_data();
+    let inputs: Dict = filtered_data.into();
+    let world = ResumeWorld::new(template_content, inputs);
+
+    let document = typst::compile(&world)
+        .output
+        .map_err(|err| color_eyre::eyre::eyre!("Typst Compile Errors in resume: {:?}", err))?;
+
+    let resume_pages = document.pages.len();
+
+    let mut cover_letter_pages = None;
+    if let Some(ref cl) = data.cover_letter {
+        let cl_template_path = current_dir
+            .join("data")
+            .join("templates")
+            .join("default_cover_letter_template.typ");
+
+        if cl_template_path.exists() {
+            let cl_template_content = fs::read_to_string(&cl_template_path)?;
+            let mut letter = cl.clone();
+            if letter.date.as_deref().unwrap_or("").is_empty() || letter.date.as_deref() == Some("auto") {
+                letter.date = Some(format_current_date());
+            }
+
+            let mut cl_inputs = Dict::new();
+            let filtered_profile = data.to_filtered_data().profile;
+            cl_inputs.insert("profile".into(), filtered_profile.into_value());
+            cl_inputs.insert(
+                "job_title".into(),
+                data.job_title
+                    .clone()
+                    .unwrap_or_else(|| "Software Engineer".to_string())
+                    .into_value(),
+            );
+            cl_inputs.insert("cover_letter".into(), letter.into_value());
+
+            let cl_world = ResumeWorld::new(cl_template_content, cl_inputs);
+            if let Ok(cl_doc) = typst::compile(&cl_world).output {
+                cover_letter_pages = Some(cl_doc.pages.len());
+            }
+        }
+    }
+
+    let max_resume_pages = cli_max_pages
+        .or_else(|| data.layout.as_ref().and_then(|l| l.resolved_max_resume_pages()));
+    let max_cover_letter_pages = data
+        .layout
+        .as_ref()
+        .and_then(|l| l.resolved_max_cover_letter_pages());
+
+    let resume_overflow = max_resume_pages.map_or(false, |limit| resume_pages > limit);
+    let cover_letter_overflow = match (cover_letter_pages, max_cover_letter_pages) {
+        (Some(actual), Some(limit)) => actual > limit,
+        _ => false,
+    };
+
+    Ok(crate::models::preset::LayoutTelemetry {
+        resume_pages,
+        cover_letter_pages,
+        max_resume_pages,
+        max_cover_letter_pages,
+        resume_overflow,
+        cover_letter_overflow,
+    })
 }
